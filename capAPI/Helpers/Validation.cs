@@ -1,4 +1,7 @@
-﻿namespace capAPI.Helpers
+﻿using System.Globalization;
+using System.Text.RegularExpressions;
+
+namespace capAPI.Helpers
 {
     public static class Validation
     {
@@ -28,7 +31,7 @@
                 }
             }
 
-            // Optional: Check allowed domains
+      
             string fullDomain = domain + "." + extension;
             string[] allowedDomains = { "gmail.com", "yahoo.com", "outlook.com", "hotmail.com" };
             if (!allowedDomains.Contains(fullDomain.ToLower()))
@@ -38,7 +41,6 @@
 
             return true;
         }
-
 
         public static bool IsValidPassword(string password)
         {
@@ -59,5 +61,47 @@
 
             return true;
         }
+
+        public static bool IsValidBirthdate(string birthdateString)
+        {
+            if (string.IsNullOrWhiteSpace(birthdateString))
+                throw new Exception("Birthdate is required");
+
+            if (!DateTime.TryParseExact(birthdateString, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime birthdate))
+                throw new Exception("Birthdate must be in the format yyyy-MM-dd");
+
+            var sixteenYearsAgo = DateTime.Today.AddYears(-16);
+            if (birthdate > sixteenYearsAgo)
+                throw new Exception("User must be at least 16 years old");
+
+            return true;
+        }
+
+        public static bool IsValidPhone(string phone)
+        {
+            if (string.IsNullOrWhiteSpace(phone))
+                throw new Exception("Phone number is required");
+
+        
+            if (!Regex.IsMatch(phone, @"^07\d{8}$"))
+                throw new Exception("Phone number must start with 07 and be 10 digits long");
+
+            return true;
+        }
+
+        public static bool IsValidFullName(string fullName)
+        {
+            if (string.IsNullOrWhiteSpace(fullName))
+                throw new Exception("Full name is required");
+
+           
+            var regex = new Regex(@"^[\p{L} ]+$");
+            if (!regex.IsMatch(fullName))
+                throw new Exception("Full name must contain only Arabic or English letters and spaces");
+
+            return true;
+        }
     }
 }
+
+
