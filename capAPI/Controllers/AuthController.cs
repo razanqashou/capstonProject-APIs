@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Azure;
+using capAPI.Helpers;
 
 namespace capAPI.Controllers
 {
@@ -52,13 +53,81 @@ namespace capAPI.Controllers
 
 
 
-                return StatusCode(200,$"Welcome {Response.Name}");
+                return StatusCode(200, $"Welcome {Response.Name}");
             }
             catch (Exception ex)
             {
                 return StatusCode(400, ex.Message);
             }
         }
+
+
+
+
+
+        [HttpPost]
+        [Route("Rest-password")]
+        public async Task<IActionResult> RestPassword(RestPasswordInput input)
+        {
+           var response = new RestPassordOutput();
+            try
+            {
+                if (string.IsNullOrEmpty(input.Email) || Validation.IsValidEmail(input.Email) )
+                    throw new Exception("invalid email");
+
+                string conn = "Server=MSI\\SQLEXPRESS13;Database=capstoneProjectDB;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+                SqlConnection connection = new SqlConnection(conn);
+                connection.Open();
+                string checkEmailQuery = "SELECT UserID FROM Users WHERE Email = @Email AND RoleID = 3";
+                SqlCommand checkEmailCmd = new SqlCommand(checkEmailQuery, connection);
+
+                checkEmailCmd.CommandType = System.Data.CommandType.Text;
+                checkEmailCmd.Parameters.AddWithValue("@Email", input.Email);
+                int emailCount = (int)checkEmailCmd.ExecuteScalar();
+
+                if (emailCount == 0)
+                    throw new Exception("No such email with RoleID 3.");
+
+                object userIdObj = checkEmailCmd.ExecuteScalar();
+                if (userIdObj == null)
+                    throw new Exception("No such email with RoleID 3.");
+
+                int userId = Convert.ToInt32(userIdObj);
+
+                string otpCode = OTPHelper.GenerateOTP();
+
+                string insertOtpQuery = @"
+                INSERT INTO UserOTPCodes (UserID, OTPCode,ExpiresAt)
+                VALUES (@UserID, @OTPCode,DATEADD(HOUR, 1, GETDATE()))";
+
+                SqlCommand insertOtpCmd = new SqlCommand(insertOtpQuery, connection);
+                insertOtpCmd.CommandType = System.Data.CommandType.Text;
+                insertOtpCmd.Parameters.AddWithValue("@UserID", userId);
+                insertOtpCmd.Parameters.AddWithValue("@OTPCode", otpCode);
+                insertOtpCmd.ExecuteNonQuery();
+
+                int insertedOtpId = Convert.ToInt32(insertOtpCmd.ExecuteScalar());
+
+
+                response.UserId = userId;
+                response.OTPCode = otpCode;
+                return Ok(response);
+
+
+
+
+              
+            }
+
+            catch (Exception ex)
+            {
+                return StatusCode(400, ex.Message);
+            }
+
+
+        }
+
     }
 }
 
+    
