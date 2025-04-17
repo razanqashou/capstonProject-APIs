@@ -24,7 +24,7 @@ namespace capAPI.Controllers
                 if (string.IsNullOrEmpty(input.Email) || string.IsNullOrEmpty(input.Password))
                     throw new Exception("Invalid email or password");
 
-                string conn = "Server=MSI\\SQLEXPRESS13;Database=capstoneProjectDB;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+                string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Trust Server Certificate=True;";
                 SqlConnection connection = new SqlConnection(conn);
                 connection.Open();
                 string query = @"SELECT userID, CONCAT(FirstName, ' ', LastName) AS FullName 
