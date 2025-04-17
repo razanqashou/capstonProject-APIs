@@ -1,42 +1,36 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
+using Microsoft.Data.SqlClient;
 
 namespace capAPI.Helpers
 {
     public static class Validation
     {
+
         public static bool IsValidEmail(string email)
         {
             if (string.IsNullOrWhiteSpace(email))
-                throw new Exception("Email is required");
+                return false;
 
             int atIndex = email.IndexOf('@');
             int dotIndex = email.LastIndexOf('.');
 
             if (atIndex < 1 || dotIndex < atIndex + 2 || dotIndex >= email.Length - 2)
-                throw new Exception("Email format is invalid");
+                return false;
 
             string domain = email.Substring(atIndex + 1, dotIndex - atIndex - 1);
             string extension = email.Substring(dotIndex + 1);
 
             if (domain.Length < 2 || extension.Length < 2)
-                throw new Exception("Email domain is invalid");
+                return false;
 
             string localPart = email.Substring(0, atIndex);
             foreach (char c in localPart)
             {
                 if (!(char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == '_' || c == '+' || c == '%'))
                 {
-                    throw new Exception("Invalid characters in email");
+                    return false;
                 }
-            }
-
-      
-            string fullDomain = domain + "." + extension;
-            string[] allowedDomains = { "gmail.com", "yahoo.com", "outlook.com", "hotmail.com" };
-            if (!allowedDomains.Contains(fullDomain.ToLower()))
-            {
-                throw new Exception("Only Gmail, Yahoo, Outlook, or Hotmail are allowed");
             }
 
             return true;
@@ -82,7 +76,7 @@ namespace capAPI.Helpers
             if (string.IsNullOrWhiteSpace(phone))
                 throw new Exception("Phone number is required");
 
-        
+
             if (!Regex.IsMatch(phone, @"^07\d{8}$"))
                 throw new Exception("Phone number must start with 07 and be 10 digits long");
 
@@ -94,12 +88,54 @@ namespace capAPI.Helpers
             if (string.IsNullOrWhiteSpace(fullName))
                 throw new Exception("Full name is required");
 
-           
+
             var regex = new Regex(@"^[\p{L} ]+$");
             if (!regex.IsMatch(fullName))
                 throw new Exception("Full name must contain only Arabic or English letters and spaces");
 
             return true;
+        }
+        public static bool IsValidOtp(SqlConnection connection, int userId, string inputOtp, out string errorMessage)
+        {
+            errorMessage = "";
+
+            string checkOtpQuery = @"
+            SELECT TOP 1 OTPCode, ExpiresAt 
+            FROM UserOTPCodes 
+            WHERE UserID = @UserID 
+            ORDER BY ExpiresAt DESC";
+
+            using (SqlCommand cmd = new SqlCommand(checkOtpQuery, connection))
+            {
+                cmd.Parameters.AddWithValue("@UserID", userId);
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (!reader.Read())
+                    {
+                        errorMessage = "OTP not found or expired";
+                        return false;
+                    }
+
+                    string storedOtp = reader["OTPCode"].ToString();
+                    DateTime expiresAt = Convert.ToDateTime(reader["ExpiresAt"]);
+
+                    if (storedOtp != inputOtp)
+                    {
+                        errorMessage = "Invalid OTP code";
+                        return false;
+                    }
+
+                    if (expiresAt < DateTime.Now)
+                    {
+                        errorMessage = "OTP code has expired";
+                        return false;
+                    }
+
+                    return true;
+                }
+
+            }
         }
     }
 }

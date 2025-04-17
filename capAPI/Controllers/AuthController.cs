@@ -6,10 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Azure;
 using capAPI.Helpers;
-<<<<<<< HEAD
 
-=======
->>>>>>> 314df00abadcb839e1a9fd3096cd5975ff0b5710
 namespace capAPI.Controllers
 {
     [Route("api/[controller]")]
@@ -63,7 +60,7 @@ namespace capAPI.Controllers
                 return StatusCode(400, ex.Message);
             }
         }
-<<<<<<< HEAD
+
 
 
 
@@ -73,13 +70,13 @@ namespace capAPI.Controllers
         [Route("Rest-password")]
         public async Task<IActionResult> RestPassword(RestPasswordInput input)
         {
-           var response = new RestPassordOutput();
+            var response = new RestPassordOutput();
             try
             {
-                if (string.IsNullOrEmpty(input.Email) || Validation.IsValidEmail(input.Email) )
+                if (string.IsNullOrEmpty(input.Email) || !Validation.IsValidEmail(input.Email))
                     throw new Exception("invalid email");
 
-                string conn = "Server=MSI\\SQLEXPRESS13;Database=capstoneProjectDB;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+                string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Trust Server Certificate=True;";
                 SqlConnection connection = new SqlConnection(conn);
                 connection.Open();
                 string checkEmailQuery = "SELECT UserID FROM Users WHERE Email = @Email AND RoleID = 3";
@@ -120,7 +117,7 @@ namespace capAPI.Controllers
 
 
 
-              
+
             }
 
             catch (Exception ex)
@@ -131,7 +128,6 @@ namespace capAPI.Controllers
 
         }
 
-=======
         [HttpPost("signup")]
         public async Task<IActionResult> SignUp([FromBody] SignUpInput input)
         {
@@ -185,8 +181,50 @@ namespace capAPI.Controllers
                 return StatusCode(400, new { Message = ex.Message });
             }
         }
->>>>>>> 314df00abadcb839e1a9fd3096cd5975ff0b5710
-    }
-}
+        [HttpPost]
+        [Route("verify-otp")]
+        public async Task<IActionResult> VerifyOtp(VerifyOtpInput input)
+        {
+            try
+            {
+                if (input.UserId <= 0)
+                    return BadRequest(new VerifyOtpOutput { Message = "Invalid user ID" });
+
+                if (!Validation.IsValidPassword(input.NewPassword))
+                    return BadRequest(new VerifyOtpOutput { Message = "Invalid password format" });
+
+                string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Trust Server Certificate=True;";
+                using (SqlConnection connection = new SqlConnection(conn))
+                {
+                    await connection.OpenAsync();
+
+                    string otpError;
+                    if (!Validation.IsValidOtp(connection, input.UserId, input.OTPCode, out otpError))
+                        return BadRequest(new VerifyOtpOutput { Message = otpError });
+
+                    string updatePasswordQuery = "UPDATE Users SET PasswordHash = @Password WHERE UserID = @UserID";
+                    using (SqlCommand updatePasswordCmd = new SqlCommand(updatePasswordQuery, connection))
+                    {
+                        updatePasswordCmd.Parameters.AddWithValue("@Password", input.NewPassword);  // Note: Hashing preferred
+                        updatePasswordCmd.Parameters.AddWithValue("@UserID", input.UserId);
+
+                        int rowsAffected = await updatePasswordCmd.ExecuteNonQueryAsync();
+
+                        if (rowsAffected > 0)
+                            return Ok(new VerifyOtpOutput { Message = "Password updated successfully" });
+                        else
+                            return BadRequest(new VerifyOtpOutput { Message = "Failed to update password" });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new VerifyOtpOutput { Message = ex.Message });
+            }
+        }
+    } }
+    
+
+
 
     
