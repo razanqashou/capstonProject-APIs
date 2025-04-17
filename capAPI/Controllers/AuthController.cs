@@ -4,6 +4,7 @@ using System.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using Azure;
 
 namespace capAPI.Controllers
 {
@@ -20,35 +21,44 @@ namespace capAPI.Controllers
             var Response = new LoginOutput();
             try
             {
-                if (string.IsNullOrEmpty(input.Email) && string.IsNullOrEmpty(input.Password))
-                    throw new Exception("invaild email or pass");
+                if (string.IsNullOrEmpty(input.Email) || string.IsNullOrEmpty(input.Password))
+                    throw new Exception("Invalid email or password");
 
-                string conn = "Server=MSI\\SQLEXPRESS13;Database=capstoneProjectDB.bacpac;TrustServerCertificate=True;";
+                string conn = "Server=MSI\\SQLEXPRESS13;Database=capstoneProjectDB;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
                 SqlConnection connection = new SqlConnection(conn);
-                string QUERY = $"SELECT userID , CONCAT(FirstName,' ',LastName) AS FullName FROM USERS WHERE EMAIL ={input.Email} ='{input.Password}'  And RoleID=3 ";
-                SqlCommand command = new SqlCommand(QUERY, connection);
+                connection.Open();
+                string query = @"SELECT userID, CONCAT(FirstName, ' ', LastName) AS FullName 
+                            FROM USERS 
+                           WHERE EMAIL = @email AND PasswordHash = @password AND RoleID = 3";
+                SqlCommand command = new SqlCommand(query, connection);
                 command.CommandType = System.Data.CommandType.Text;
-                SqlDataAdapter sqlDataAdapter = new SqlDataAdapter(command);
-                DataTable dataTable = new DataTable();
-                sqlDataAdapter.Fill(dataTable);
-                //Mapping Extract
-                if (dataTable.Rows.Count == 0)
-                    throw new Exception("Invalid Email / Password");
-                if (dataTable.Rows.Count > 1)
-                    throw new Exception("Query Contains More Than One Element");
-                foreach (DataRow row in dataTable.Rows)
-                {
+                command.Parameters.AddWithValue("@email", input.Email);
+                command.Parameters.AddWithValue("@password", input.Password);
+                SqlDataAdapter adapter = new SqlDataAdapter(command);
+                DataTable dt = new DataTable();
+                adapter.Fill(dt);
 
+                if (dt.Rows.Count == 0)
+                    throw new Exception("invalid email / pass");
+                if (dt.Rows.Count > 1)
+                    throw new Exception("query contains more than one");
+
+
+                foreach (DataRow row in dt.Rows)
+                {
                     Response.Id = Convert.ToInt32(row["userID"]);
                     Response.Name = row["FullName"].ToString();
                 }
-                return Ok(Response);
 
+
+
+                return StatusCode(200,$"Welcome {Response.Name}");
             }
             catch (Exception ex)
             {
-                return StatusCode(400, ex.ToString());
+                return StatusCode(400, ex.Message);
             }
         }
     }
 }
+
