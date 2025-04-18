@@ -6,10 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Azure;
 using capAPI.Helpers;
-<<<<<<< HEAD
-
-=======
->>>>>>> 314df00abadcb839e1a9fd3096cd5975ff0b5710
 namespace capAPI.Controllers
 {
     [Route("api/[controller]")]
@@ -63,7 +59,7 @@ namespace capAPI.Controllers
                 return StatusCode(400, ex.Message);
             }
         }
-<<<<<<< HEAD
+
 
 
 
@@ -131,7 +127,7 @@ namespace capAPI.Controllers
 
         }
 
-=======
+
         [HttpPost("signup")]
         public async Task<IActionResult> SignUp([FromBody] SignUpInput input)
         {
@@ -151,7 +147,8 @@ namespace capAPI.Controllers
                 Validation.IsValidPassword(input.Password);
                 Validation.IsValidBirthdate(input.Birthdate);
 
-                string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Trust Server Certificate=True;";
+                   string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Trust Server Certificate=True;";
+               // string conn = "Server=MSI\\SQLEXPRESS13;Database=capstoneProjectDB;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
                 using (SqlConnection connection = new SqlConnection(conn))
                 {
                     using (SqlCommand command = new SqlCommand("sp_RegisterClient", connection))
@@ -185,7 +182,7 @@ namespace capAPI.Controllers
                 return StatusCode(400, new { Message = ex.Message });
             }
         }
->>>>>>> 314df00abadcb839e1a9fd3096cd5975ff0b5710
+
     }
 }
 
