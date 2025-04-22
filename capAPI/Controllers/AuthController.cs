@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Azure;
 using capAPI.Helpers;
+
 namespace capAPI.Controllers
 {
     [Route("api/[controller]")]
@@ -24,7 +25,8 @@ namespace capAPI.Controllers
                 if (string.IsNullOrEmpty(input.Email) || string.IsNullOrEmpty(input.Password))
                     throw new Exception("Invalid email or password");
 
-                string conn = "Server=MSI\\SQLEXPRESS13;Database=capstoneProjectDB;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+                string conn = "Server=MSI\\SQLEXPRESS13;Database=capprojectfinal.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+
                 SqlConnection connection = new SqlConnection(conn);
                 connection.Open();
                 string query = @"SELECT userID, CONCAT(FirstName, ' ', LastName) AS FullName 
@@ -69,13 +71,14 @@ namespace capAPI.Controllers
         [Route("Rest-password")]
         public async Task<IActionResult> RestPassword(RestPasswordInput input)
         {
-           var response = new RestPassordOutput();
+            var response = new RestPassordOutput();
             try
             {
-                if (string.IsNullOrEmpty(input.Email) || Validation.IsValidEmail(input.Email) )
+                if (string.IsNullOrEmpty(input.Email) || !Validation.IsValidEmail(input.Email))
                     throw new Exception("invalid email");
 
-                string conn = "Server=MSI\\SQLEXPRESS13;Database=capstoneProjectDB;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+                string conn = "Server=MSI\\SQLEXPRESS13;Database=capprojectfinal.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+
                 SqlConnection connection = new SqlConnection(conn);
                 connection.Open();
                 string checkEmailQuery = "SELECT UserID FROM Users WHERE Email = @Email AND RoleID = 3";
@@ -116,7 +119,7 @@ namespace capAPI.Controllers
 
 
 
-              
+
             }
 
             catch (Exception ex)
@@ -147,10 +150,12 @@ namespace capAPI.Controllers
                 Validation.IsValidPassword(input.Password);
                 Validation.IsValidBirthdate(input.Birthdate);
 
-                   string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Trust Server Certificate=True;";
-               // string conn = "Server=MSI\\SQLEXPRESS13;Database=capstoneProjectDB;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+                string conn = "Server=MSI\\SQLEXPRESS13;Database=capprojectfinal.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+
+                // string conn = "Server=MSI\\SQLEXPRESS13;Database=capstoneProjectDB;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
                 using (SqlConnection connection = new SqlConnection(conn))
                 {
+                    connection.Open();
                     using (SqlCommand command = new SqlCommand("sp_RegisterClient", connection))
                     {
                         command.CommandType = CommandType.StoredProcedure;
@@ -167,8 +172,8 @@ namespace capAPI.Controllers
                         command.Parameters.AddWithValue("@Birthdate", input.Birthdate);
 
 
-                        connection.Open();
-                        var userId = command.ExecuteScalar();
+                      
+                        int userId = Convert.ToInt32( command.ExecuteScalar());
 
                         response.UserId = Convert.ToInt32(userId);
                         response.Message = "User registered successfully";
@@ -183,7 +188,55 @@ namespace capAPI.Controllers
             }
         }
 
-    }
-}
+
+  
+
+
+        [HttpPost]
+        [Route("verify-otp")]
+        public async Task<IActionResult> VerifyOtp(VerifyOtpInput input)
+        {
+            try
+            {
+                if (input.UserId <= 0)
+                    return BadRequest(new VerifyOtpOutput { Message = "Invalid user ID" });
+
+                if (!Validation.IsValidPassword(input.NewPassword))
+                    return BadRequest(new VerifyOtpOutput { Message = "Invalid password format" });
+
+                string conn = "Server=MSI\\SQLEXPRESS13;Database=capprojectfinal.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+
+                using (SqlConnection connection = new SqlConnection(conn))
+                {
+                    await connection.OpenAsync();
+
+                    string otpError;
+                    if (!Validation.IsValidOtp(connection, input.UserId, input.OTPCode, out otpError))
+                        return BadRequest(new VerifyOtpOutput { Message = otpError });
+
+                    string updatePasswordQuery = "UPDATE Users SET PasswordHash = @Password WHERE UserID = @UserID";
+                    using (SqlCommand updatePasswordCmd = new SqlCommand(updatePasswordQuery, connection))
+                    {
+                        updatePasswordCmd.Parameters.AddWithValue("@Password", input.NewPassword);  // Note: Hashing preferred
+                        updatePasswordCmd.Parameters.AddWithValue("@UserID", input.UserId);
+
+                        int rowsAffected = await updatePasswordCmd.ExecuteNonQueryAsync();
+
+                        if (rowsAffected > 0)
+                            return Ok(new VerifyOtpOutput { Message = "Password updated successfully" });
+                        else
+                            return BadRequest(new VerifyOtpOutput { Message = "Failed to update password" });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new VerifyOtpOutput { Message = ex.Message });
+            }
+        }
+    } }
+    
+
+
 
     
