@@ -190,6 +190,9 @@ namespace capAPI.Controllers
                 if (input.UserId <= 0)
                     return BadRequest(new VerifyOtpOutput { Message = "Invalid user ID" });
 
+                if (input.NewPassword != input.ConfirmPassword)
+                    return BadRequest(new VerifyOtpOutput { Message = "Passwords do not match" });
+
                 if (!Validation.IsValidPassword(input.NewPassword))
                     return BadRequest(new VerifyOtpOutput { Message = "Invalid password format" });
 
@@ -205,7 +208,7 @@ namespace capAPI.Controllers
                     string updatePasswordQuery = "UPDATE Users SET PasswordHash = @Password WHERE UserID = @UserID";
                     using (SqlCommand updatePasswordCmd = new SqlCommand(updatePasswordQuery, connection))
                     {
-                        updatePasswordCmd.Parameters.AddWithValue("@Password", input.NewPassword);  // Note: Hashing preferred
+                        updatePasswordCmd.Parameters.AddWithValue("@Password", input.NewPassword); // تذكير: يفضل تستخدم hashing
                         updatePasswordCmd.Parameters.AddWithValue("@UserID", input.UserId);
 
                         int rowsAffected = await updatePasswordCmd.ExecuteNonQueryAsync();
@@ -222,9 +225,7 @@ namespace capAPI.Controllers
                 return BadRequest(new VerifyOtpOutput { Message = ex.Message });
             }
         }
-    } }
-    
+    }
+}
 
 
-
-    
