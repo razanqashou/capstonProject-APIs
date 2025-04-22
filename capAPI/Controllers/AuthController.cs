@@ -13,8 +13,7 @@ namespace capAPI.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        //teset
-        //hhjh
+      
         [HttpPost]
         [Route("login")]
         public async Task<IActionResult> login(LoginInput input)
@@ -165,8 +164,17 @@ namespace capAPI.Controllers
                         command.Parameters.AddWithValue("@Phone", input.Phone);
                         command.Parameters.AddWithValue("@Birthdate", input.Birthdate);
 
-
                         connection.Open();
+                        int affectedRows = command.ExecuteNonQuery();  
+
+                        if (affectedRows > 1)
+                        {
+                            response.UserId = 0;
+                            response.Message = "More than one row was affected, which is unexpected.";
+                            return StatusCode(400, response);  
+                        }
+
+                        command.CommandText = "SELECT SCOPE_IDENTITY()";  
                         var userId = command.ExecuteScalar();
 
                         response.UserId = Convert.ToInt32(userId);
@@ -181,6 +189,7 @@ namespace capAPI.Controllers
                 return StatusCode(400, new { Message = ex.Message });
             }
         }
+
         [HttpPost]
         [Route("verify-otp")]
         public async Task<IActionResult> VerifyOtp(VerifyOtpInput input)
@@ -208,7 +217,7 @@ namespace capAPI.Controllers
                     string updatePasswordQuery = "UPDATE Users SET PasswordHash = @Password WHERE UserID = @UserID";
                     using (SqlCommand updatePasswordCmd = new SqlCommand(updatePasswordQuery, connection))
                     {
-                        updatePasswordCmd.Parameters.AddWithValue("@Password", input.NewPassword); // تذكير: يفضل تستخدم hashing
+                        updatePasswordCmd.Parameters.AddWithValue("@Password", input.NewPassword); 
                         updatePasswordCmd.Parameters.AddWithValue("@UserID", input.UserId);
 
                         int rowsAffected = await updatePasswordCmd.ExecuteNonQueryAsync();
