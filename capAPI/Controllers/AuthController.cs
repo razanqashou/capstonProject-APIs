@@ -167,7 +167,7 @@ namespace capAPI.Controllers
                         connection.Open();
                         int affectedRows = command.ExecuteNonQuery();  
 
-                        if (affectedRows > 1)
+                        if (affectedRows > 0)
                         {
                             response.UserId = 0;
                             response.Message = "More than one row was affected, which is unexpected.";
