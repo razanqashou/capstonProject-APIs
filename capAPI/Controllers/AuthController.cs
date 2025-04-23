@@ -13,7 +13,6 @@ namespace capAPI.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        //razan
         [HttpPost]
         [Route("login")]
         public async Task<IActionResult> login(LoginInput input)
@@ -24,7 +23,11 @@ namespace capAPI.Controllers
                 if (string.IsNullOrEmpty(input.Email) || string.IsNullOrEmpty(input.Password))
                     throw new Exception("Invalid email or password");
 
+
                string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+
+              //  string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
+
 
                 SqlConnection connection = new SqlConnection(conn);
                 connection.Open();
@@ -74,6 +77,8 @@ namespace capAPI.Controllers
                     throw new Exception("Invalid email");
 
                 string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+              //  string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
+
                 using (SqlConnection connection = new SqlConnection(conn))
                 {
                     connection.Open();
@@ -119,8 +124,6 @@ namespace capAPI.Controllers
 
 
 
-
-        //enas
         [HttpPost("signup")]
         public async Task<IActionResult> SignUp([FromBody] SignUpInput input)
         {
@@ -140,8 +143,9 @@ namespace capAPI.Controllers
                 Validation.IsValidPassword(input.Password);
                 Validation.IsValidBirthdate(input.Birthdate);
 
-              //  string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True;";
                 string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+               // string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True;";
+
                 using (SqlConnection connection = new SqlConnection(conn))
                 {
                     connection.Open();
@@ -177,7 +181,6 @@ namespace capAPI.Controllers
             }
         }
 
-        //enas
         [HttpPost]
         [Route("verify-otp")]
         public async Task<IActionResult> VerifyOtp(VerifyOtpInput input)
@@ -193,7 +196,10 @@ namespace capAPI.Controllers
                 if (!Validation.IsValidPassword(input.NewPassword))
                     return BadRequest(new VerifyOtpOutput { Message = "Invalid password format" });
 
-                string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+
+               // string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+
+                string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
 
                 using (SqlConnection connection = new SqlConnection(conn))
                 {
