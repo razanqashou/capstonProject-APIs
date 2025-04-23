@@ -13,8 +13,7 @@ namespace capAPI.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        //teset
-        //hhjh
+        //razan
         [HttpPost]
         [Route("login")]
         public async Task<IActionResult> login(LoginInput input)
@@ -25,7 +24,7 @@ namespace capAPI.Controllers
                 if (string.IsNullOrEmpty(input.Email) || string.IsNullOrEmpty(input.Password))
                     throw new Exception("Invalid email or password");
 
-                string conn = "Server=MSI\\SQLEXPRESS13;Database=capprojectfinal.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+               string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
 
                 SqlConnection connection = new SqlConnection(conn);
                 connection.Open();
@@ -62,7 +61,7 @@ namespace capAPI.Controllers
             }
         }
 
-
+        //razan
         [HttpPost]
         [Route("Rest-password")]
         public async Task<IActionResult> RestPassword(RestPasswordInput input)
@@ -74,7 +73,7 @@ namespace capAPI.Controllers
                 if (string.IsNullOrEmpty(input.Email) || !Validation.IsValidEmail(input.Email))
                     throw new Exception("Invalid email");
 
-                string conn = "Server=MSI\\SQLEXPRESS13;Database=capprojectfinal.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+                string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
                 using (SqlConnection connection = new SqlConnection(conn))
                 {
                     connection.Open();
@@ -104,7 +103,7 @@ namespace capAPI.Controllers
                     {
                         response.UserId = userId;
                         response.OTPCode = otpCode;
-                        return StatusCode(201, response); // return the full response
+                        return StatusCode(201, response); 
                     }
                     else
                     {
@@ -121,81 +120,7 @@ namespace capAPI.Controllers
 
 
 
-
-        //[HttpPost]
-        //[Route("Rest-password")]
-        //public async Task<IActionResult> RestPassword(RestPasswordInput input)
-        //{
-        //    var response = new RestPassordOutput();
-        //    try
-        //    {
-        //        if (string.IsNullOrEmpty(input.Email) || !Validation.IsValidEmail(input.Email))
-        //            throw new Exception("invalid email");
-
-        //        string conn = "Server=MSI\\SQLEXPRESS13;Database=capprojectfinal.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
-
-        //        SqlConnection connection = new SqlConnection(conn);
-        //        connection.Open();
-        //        string checkEmailQuery = "SELECT UserID FROM Users WHERE Email = @Email AND RoleID = 3";
-        //        SqlCommand checkEmailCmd = new SqlCommand(checkEmailQuery, connection);
-
-        //        checkEmailCmd.CommandType = System.Data.CommandType.Text;
-        //        checkEmailCmd.Parameters.AddWithValue("@Email", input.Email);
-        //        int emailCount = (int)checkEmailCmd.ExecuteScalar();
-
-        //        if (emailCount == 0)
-        //            throw new Exception("No such email with RoleID 3.");
-
-        //        object userIdObj = checkEmailCmd.ExecuteScalar();
-        //        if (userIdObj == null)
-        //            throw new Exception("No such email with RoleID 3.");
-
-        //        int userId = Convert.ToInt32(userIdObj);
-
-        //        string otpCode = OTPHelper.GenerateOTP();
-
-        //        string insertOtpQuery = @"
-        //        INSERT INTO UserOTPCodes (UserID, OTPCode,ExpiresAt)
-        //        VALUES (@UserID, @OTPCode,DATEADD(HOUR, 1, GETDATE()))";
-
-        //        SqlCommand insertOtpCmd = new SqlCommand(insertOtpQuery, connection);
-        //        insertOtpCmd.CommandType = System.Data.CommandType.Text;
-        //        insertOtpCmd.Parameters.AddWithValue("@UserID", userId);
-        //        insertOtpCmd.Parameters.AddWithValue("@OTPCode", otpCode);
-                
-        //        var result= insertOtpCmd.ExecuteNonQuery();
-
-        //        if (result > 0)
-        //        {
-        //            return StatusCode(201, "OTP code was sended");
-        //        }else
-        //        {
-        //            return StatusCode(400, " failed in send OTP code");
-        //        }
-
-
-        //        int insertedOtpId = Convert.ToInt32(insertOtpCmd.ExecuteScalar());
-
-
-        //        response.UserId = userId;
-        //        response.OTPCode = otpCode;
-        //        return Ok(response);
-
-
-
-
-
-        //    }
-
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(400, ex.Message);
-        //    }
-
-
-        //}
-
-
+        //enas
         [HttpPost("signup")]
         public async Task<IActionResult> SignUp([FromBody] SignUpInput input)
         {
@@ -215,9 +140,8 @@ namespace capAPI.Controllers
                 Validation.IsValidPassword(input.Password);
                 Validation.IsValidBirthdate(input.Birthdate);
 
-                string conn = "Server=MSI\\SQLEXPRESS13;Database=capprojectfinal.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
-
-                // string conn = "Server=MSI\\SQLEXPRESS13;Database=capstoneProjectDB;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+              //  string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True;";
+                string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
                 using (SqlConnection connection = new SqlConnection(conn))
                 {
                     connection.Open();
@@ -237,8 +161,8 @@ namespace capAPI.Controllers
                         command.Parameters.AddWithValue("@Birthdate", input.Birthdate);
 
 
-                      
-                        int userId = Convert.ToInt32( command.ExecuteScalar());
+
+                        int userId = Convert.ToInt32(command.ExecuteScalar());
 
                         response.UserId = Convert.ToInt32(userId);
                         response.Message = "User registered successfully";
@@ -253,10 +177,7 @@ namespace capAPI.Controllers
             }
         }
 
-
-  
-
-
+        //enas
         [HttpPost]
         [Route("verify-otp")]
         public async Task<IActionResult> VerifyOtp(VerifyOtpInput input)
@@ -272,7 +193,7 @@ namespace capAPI.Controllers
                 if (!Validation.IsValidPassword(input.NewPassword))
                     return BadRequest(new VerifyOtpOutput { Message = "Invalid password format" });
 
-                string conn = "Server=MSI\\SQLEXPRESS13;Database=capprojectfinal.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+                string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
 
                 using (SqlConnection connection = new SqlConnection(conn))
                 {
@@ -285,7 +206,7 @@ namespace capAPI.Controllers
                     string updatePasswordQuery = "UPDATE Users SET PasswordHash = @Password WHERE UserID = @UserID";
                     using (SqlCommand updatePasswordCmd = new SqlCommand(updatePasswordQuery, connection))
                     {
-                        updatePasswordCmd.Parameters.AddWithValue("@Password", input.NewPassword); // تذكير: يفضل تستخدم hashing
+                        updatePasswordCmd.Parameters.AddWithValue("@Password", input.NewPassword); 
                         updatePasswordCmd.Parameters.AddWithValue("@UserID", input.UserId);
 
                         int rowsAffected = await updatePasswordCmd.ExecuteNonQueryAsync();
