@@ -2,9 +2,10 @@
 {
     public class VerificationInputDTO
     {
-        public string Email { get; set; }
-        public bool IsSignup { get; set; }
+
+        public int Userid{ get; set; }
         public string OTPCode { get; set; }
+        public string type { get; set; }
 
     }
 }
