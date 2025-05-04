@@ -49,9 +49,9 @@ namespace capAPI.Controllers
 
                     
                     Random random = new Random();
-                    var otp = random.Next(11111, 99999).ToString();
+                    var otp = random.Next(1111, 9999).ToString();
                     DateTime now = DateTime.Now;
-                    DateTime expiresAt = now.AddMinutes(5);
+                    DateTime expiresAt = now.AddMinutes(60);
 
                     
                     string insertOtpQuery = @"
@@ -87,6 +87,78 @@ namespace capAPI.Controllers
             {
                 return StatusCode(400, ex.Message);
             }
+        }
+
+        [HttpPost]
+        [Route("Send-OTP")]
+        public async Task<IActionResult> SendOTP([FromBody] string email)
+        {
+            try
+            {
+                string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+
+                if (string.IsNullOrEmpty(email) || !Validation.IsValidEmail(email))
+                    throw new Exception("Invalid email");
+                using (SqlConnection connection = new SqlConnection(conn))
+                {
+                    await connection.OpenAsync();
+
+                    string getUserIdQuery = "SELECT UserID FROM Users WHERE Email = @Email ";
+                    SqlCommand getUserIdCmd = new SqlCommand(getUserIdQuery, connection);
+                    getUserIdCmd.Parameters.AddWithValue("@Email", email);
+                    var result = await getUserIdCmd.ExecuteScalarAsync();
+
+                    if (result == null)
+                        throw new Exception("User not found.");
+
+                    int userId = Convert.ToInt32(result);
+
+                    Random random = new Random();
+                    var otp = random.Next(1111, 9999).ToString();
+                    DateTime now = DateTime.Now;
+                    DateTime expiresAt = now.AddMinutes(60);
+
+
+                    string insertOtpQuery = @"
+                           INSERT INTO UserOTPCodes (UserID, OTPCode, CreatedAt, CreatedBy, ExpiresAt, IsUsed, isActive)
+                       VALUES (@UserID, @OTPCode, @CreatedAt, @CreatedBy, @ExpiresAt, 0, 1)";
+
+
+                    SqlCommand insertCommand = new SqlCommand(insertOtpQuery, connection);
+                    insertCommand.Parameters.AddWithValue("@UserID", userId);
+                    insertCommand.Parameters.AddWithValue("@OTPCode", otp);
+                    insertCommand.Parameters.AddWithValue("@CreatedAt", now);
+                    insertCommand.Parameters.AddWithValue("@CreatedBy", "System");
+                    insertCommand.Parameters.AddWithValue("@ExpiresAt", expiresAt);
+
+                    await insertCommand.ExecuteNonQueryAsync();
+                    try
+                    {
+                        await EmailHelper.SendOtpEmail(email, "Your One-Time Rest-Password Code", "We received a request to Rest-Password to your account. Please use the code below to complete your Rest-Password process.", otp);
+                    }
+                    catch (Exception emailEx)
+                    {
+
+                        throw new Exception("Registration failed during email sending: " + emailEx.Message);
+                    }
+
+                    return Ok("OTP sent successfully");
+
+
+                }
+
+
+
+
+
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(400, ex.Message);
+            }
+        
+
+
         }
 
         //razan
@@ -201,9 +273,9 @@ namespace capAPI.Controllers
                         int userId = Convert.ToInt32(await command.ExecuteScalarAsync());
 
                         Random random = new Random();
-                        var otp = random.Next(11111, 99999).ToString();
+                        var otp = random.Next(1111, 9999).ToString();
                         DateTime now = DateTime.Now;
-                        DateTime expiresAt = now.AddMinutes(5);
+                        DateTime expiresAt = now.AddMinutes(60);
 
                         string insertOtpQuery = @"
                     INSERT INTO UserOTPCodes (UserID, OTPCode, CreatedAt, CreatedBy, ExpiresAt, IsUsed, isActive)
@@ -240,6 +312,33 @@ namespace capAPI.Controllers
                 return StatusCode(400, new { Message = ex.Message });
             }
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         [HttpPost]
         [Route("verify-otp")]
