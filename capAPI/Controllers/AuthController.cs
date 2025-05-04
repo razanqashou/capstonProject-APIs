@@ -27,10 +27,11 @@ namespace capAPI.Controllers
         [Route("login")]
         public async Task<IActionResult> login(LoginInput input)
         {
+            var response = new SignUpOutput();
 
             try
             {
-                string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
+                string conn = "Server=MSI\\SQLEXPRESS13;Database=DatabaseEdit;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
 
 
                 if (string.IsNullOrEmpty(input.Email) || string.IsNullOrEmpty(input.Password))
@@ -87,8 +88,10 @@ namespace capAPI.Controllers
                         throw new Exception("Registration failed during email sending: " + emailEx.Message);
                     }
 
+                    response.UserId = userId;
+                    response.Message = "  Please check your email OTP has been sent!";
 
-                    return StatusCode(200, "  Please check your email OTP has been sent!");
+                    return StatusCode(200, response);
                 }
 
 
@@ -102,11 +105,13 @@ namespace capAPI.Controllers
         [HttpPost]
         [Route("Send-OTP")]
         public async Task<IActionResult> SendOTP([FromBody] string email)
+
         {
+            var response = new SignUpOutput();
             try
             {
-                //   string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
-                string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
+                  string conn = "Server=MSI\\SQLEXPRESS13;Database=DatabaseEdit;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+               // string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
                 if (string.IsNullOrEmpty(email) || !Validation.IsValidEmail(email))
                     throw new Exception("Invalid email");
                 using (SqlConnection connection = new SqlConnection(conn))
@@ -152,16 +157,14 @@ namespace capAPI.Controllers
 
                         throw new Exception("Registration failed during email sending: " + emailEx.Message);
                     }
+                    response.UserId= userId;
+                    response.Message = "OTP sent successfully";
 
 
-
-                    return Ok("OTP sent successfully");
+                    return StatusCode(200, response);
 
 
                 }
-
-
-
 
 
             }
@@ -184,7 +187,7 @@ namespace capAPI.Controllers
             {
 
                 var user = _context.Users.Where(u => u.UserId == input.userid 
- ).SingleOrDefault();
+                 ).SingleOrDefault();
                 if (user == null)
                 {
                     return Ok("user not found");
@@ -234,8 +237,10 @@ namespace capAPI.Controllers
                 Validation.IsValidFullName(input.FullName);
                 Validation.IsValidPassword(input.Password);
                 Validation.IsValidBirthdate(input.Birthdate);
+                string conn = "Server=MSI\\SQLEXPRESS13;Database=DatabaseEdit;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
 
-           string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
+
+                // string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
 
                 using (SqlConnection connection = new SqlConnection(conn))
                 {
@@ -301,6 +306,7 @@ namespace capAPI.Controllers
                         response.Message = "Verifying your email using OTP";
 
                     }
+
                 }
 
                 return Ok(response);
@@ -319,10 +325,10 @@ namespace capAPI.Controllers
 
                 var user = await _context.Users
                     .SingleOrDefaultAsync(u => u.UserId == input.Userid);
-                // الحصول على الـ OTP المناسب بناءً على الـ UserId
+                
                 var otpEntry = await _context.UserOtpcodes
                     .Where(o =>o.Otpcode == input.OTPCode && o.ExpiresAt > DateTime.Now)
-                    .OrderByDescending(o => o.ExpiresAt) // إذا كان هناك أكثر من OTP، نأخذ الأحدث
+                    .OrderByDescending(o => o.ExpiresAt) 
                     .FirstOrDefaultAsync();
            
                 if (otpEntry == null)
@@ -331,7 +337,7 @@ namespace capAPI.Controllers
 
 
 
-                // بناءً على الـ IsSignup من UserOtpcode نقوم بالتحديث
+              
                 if (input.type == "SignUP")
                 {
                     
@@ -363,7 +369,7 @@ namespace capAPI.Controllers
                     user.LastLoginTime = DateTime.Now;
                     user.IsLoggedIn = true;
                     otpEntry.Otpcode = null;
-                    otpEntry.IsActive = false; // إلغاء تفعيل OTP بعد تسجيل الدخول
+                    otpEntry.IsActive = false; 
                     otpEntry.ExpiresAt = null;
                     _context.Update(user);
                     _context.Update(otpEntry);

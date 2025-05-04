@@ -9,25 +9,45 @@ namespace capAPI.Helpers
 
         public static bool IsValidEmail(string email)
         {
+            
             if (string.IsNullOrWhiteSpace(email))
                 return false;
 
-            int atIndex = email.IndexOf('@');
-            int dotIndex = email.LastIndexOf('.');
-
-            if (atIndex < 1 || dotIndex < atIndex + 2 || dotIndex >= email.Length - 2)
+            
+            if (email.Length > 254)
                 return false;
 
-            string domain = email.Substring(atIndex + 1, dotIndex - atIndex - 1);
-            string extension = email.Substring(dotIndex + 1);
-
-            if (domain.Length < 2 || extension.Length < 2)
+            
+            var parts = email.Split('@');
+            if (parts.Length != 2)
                 return false;
 
-            string localPart = email.Substring(0, atIndex);
+            string localPart = parts[0];
+            string domain = parts[1].ToLower();
+
+            
+            if (localPart.Length == 0 || localPart.Length > 64)
+                return false;
+
+            
+            var allowedDomains = new[] { "gmail.com", "yahoo.com", "outlook.com", "hotmail.com" };
+            if (!allowedDomains.Contains(domain))
+                return false;
+
+         
+            if (localPart.StartsWith('.') || localPart.EndsWith('.'))
+                return false;
+
+           
+            if (localPart.Contains(".."))
+                return false;
+
+           
             foreach (char c in localPart)
             {
-                if (!(char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == '_' || c == '+' || c == '%'))
+                if (!(char.IsLetterOrDigit(c)
+                      || c == '.' || c == '-' || c == '_'
+                      || c == '+' || c == '%'))
                 {
                     return false;
                 }
@@ -35,6 +55,7 @@ namespace capAPI.Helpers
 
             return true;
         }
+
 
         public static bool IsValidPassword(string password)
         {
