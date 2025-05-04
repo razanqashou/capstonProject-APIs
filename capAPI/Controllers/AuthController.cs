@@ -135,12 +135,15 @@ namespace capAPI.Controllers
                     try
                     {
                         await EmailHelper.SendOtpEmail(email, "Your One-Time Rest-Password Code", "We received a request to Rest-Password to your account. Please use the code below to complete your Rest-Password process.", otp);
+
                     }
                     catch (Exception emailEx)
                     {
 
                         throw new Exception("Registration failed during email sending: " + emailEx.Message);
                     }
+
+
 
                     return Ok("OTP sent successfully");
 
