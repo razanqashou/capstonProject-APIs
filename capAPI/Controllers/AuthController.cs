@@ -6,21 +6,31 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Azure;
 using capAPI.Helpers;
+using capAPI.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
+using System.Text;
 
 namespace capAPI.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
     {
+        private readonly DBCapstoneContext _context;
+        public AuthController(DBCapstoneContext context)
+        {
+            _context = context;
+        }
         [HttpPost]
         [Route("login")]
         public async Task<IActionResult> login(LoginInput input)
         {
-           
+
             try
             {
-                string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+                string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
 
 
                 if (string.IsNullOrEmpty(input.Email) || string.IsNullOrEmpty(input.Password))
@@ -30,7 +40,7 @@ namespace capAPI.Controllers
                 {
                     await connection.OpenAsync();
 
-                   
+
                     string selectQuery = "SELECT TOP 1 * FROM USERS WHERE Email = @Email AND PasswordHash = @Password AND IsLoggedIn = 0 AND RoleID = 3";
                     SqlCommand selectCommand = new SqlCommand(selectQuery, connection);
                     selectCommand.Parameters.AddWithValue("@Email", input.Email);
@@ -45,15 +55,15 @@ namespace capAPI.Controllers
                     if (dt.Rows.Count > 1)
                         throw new Exception("query contains more than one");
 
-                    int userId = Convert.ToInt32(dt.Rows[0]["userID"]); 
+                    int userId = Convert.ToInt32(dt.Rows[0]["userID"]);
 
-                    
+
                     Random random = new Random();
                     var otp = random.Next(1111, 9999).ToString();
                     DateTime now = DateTime.Now;
                     DateTime expiresAt = now.AddMinutes(60);
 
-                    
+
                     string insertOtpQuery = @"
                            INSERT INTO UserOTPCodes (UserID, OTPCode, CreatedAt, CreatedBy, ExpiresAt, IsUsed, isActive)
                        VALUES (@UserID, @OTPCode, @CreatedAt, @CreatedBy, @ExpiresAt, 0, 1)";
@@ -63,7 +73,7 @@ namespace capAPI.Controllers
                     insertCommand.Parameters.AddWithValue("@UserID", userId);
                     insertCommand.Parameters.AddWithValue("@OTPCode", otp);
                     insertCommand.Parameters.AddWithValue("@CreatedAt", now);
-                    insertCommand.Parameters.AddWithValue("@CreatedBy", "System"); 
+                    insertCommand.Parameters.AddWithValue("@CreatedBy", "System");
                     insertCommand.Parameters.AddWithValue("@ExpiresAt", expiresAt);
 
                     await insertCommand.ExecuteNonQueryAsync();
@@ -80,7 +90,7 @@ namespace capAPI.Controllers
 
                     return StatusCode(200, "  Please check your email OTP has been sent!");
                 }
- 
+
 
             }
             catch (Exception ex)
@@ -95,8 +105,8 @@ namespace capAPI.Controllers
         {
             try
             {
-                string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
-
+                //   string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+                string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
                 if (string.IsNullOrEmpty(email) || !Validation.IsValidEmail(email))
                     throw new Exception("Invalid email");
                 using (SqlConnection connection = new SqlConnection(conn))
@@ -159,7 +169,7 @@ namespace capAPI.Controllers
             {
                 return StatusCode(400, ex.Message);
             }
-        
+
 
 
         }
@@ -167,60 +177,43 @@ namespace capAPI.Controllers
         //razan
         [HttpPost]
         [Route("Rest-password")]
-        public async Task<IActionResult> RestPassword(RestPasswordInput input)
+        public  async Task<IActionResult> RestPassword(ResetPersonPasswordInputDTO input)
         {
-            var response = new RestPassordOutput();
 
             try
             {
-                if (string.IsNullOrEmpty(input.Email) || !Validation.IsValidEmail(input.Email))
-                    throw new Exception("Invalid email");
 
-                string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
-
-                using (SqlConnection connection = new SqlConnection(conn))
+                var user = _context.Users.Where(u => u.UserId == input.userid 
+ ).SingleOrDefault();
+                if (user == null)
                 {
-                    connection.Open();
-
-                    string checkEmailQuery = "SELECT UserID FROM Users WHERE Email = @Email AND RoleID = 3";
-                    SqlCommand checkEmailCmd = new SqlCommand(checkEmailQuery, connection);
-                    checkEmailCmd.Parameters.AddWithValue("@Email", input.Email);
-
-                    object userIdObj = checkEmailCmd.ExecuteScalar();
-                    if (userIdObj == null)
-                        throw new Exception("No such email with RoleID 3.");
-
-                    int userId = Convert.ToInt32(userIdObj);
-                //    string otpCode = OTPHelper.GenerateOTP();
-
-                //    string insertOtpQuery = @"
-                //INSERT INTO UserOTPCodes (UserID, OTPCode, ExpiresAt)
-                //VALUES (@UserID, @OTPCode, DATEADD(HOUR, 1, GETDATE()))";
-
-                //    SqlCommand insertOtpCmd = new SqlCommand(insertOtpQuery, connection);
-                //    insertOtpCmd.Parameters.AddWithValue("@UserID", userId);
-                //    insertOtpCmd.Parameters.AddWithValue("@OTPCode", otpCode);
-
-                //    int result = insertOtpCmd.ExecuteNonQuery();
-
-                //    if (result > 0)
-                //    {
-                //        response.UserId = userId;
-                //        response.OTPCode = otpCode;
-                //        return StatusCode(201, response); 
-                //    }
-                //    else
-                //    {
-                        return StatusCode(400, "Failed to send OTP code");
-                    //}
+                    return Ok("user not found");
                 }
+
+                Validation.IsValidPassword(input.Password);
+                if (input.Password != input.ConfirmPassword)
+                {
+                    return Ok(" Cofirrm password Not Match the password");
+                }
+
+
+                user.PasswordHash = input.ConfirmPassword;
+
+
+                _context.Update(user);
+                _context.SaveChanges();
+
+                return Ok("Congradution Your password Reset Sesccefully");
+
+
+
             }
             catch (Exception ex)
             {
                 return StatusCode(400, ex.Message);
             }
         }
-
+    
 
 
         [HttpPost("signup")]
@@ -242,13 +235,13 @@ namespace capAPI.Controllers
                 Validation.IsValidPassword(input.Password);
                 Validation.IsValidBirthdate(input.Birthdate);
 
-                string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+           string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
 
                 using (SqlConnection connection = new SqlConnection(conn))
                 {
                     connection.Open();
 
-                   
+
                     using (SqlCommand checkEmailCmd = new SqlCommand("SELECT COUNT(*) FROM Users WHERE Email = @Email", connection))
                     {
                         checkEmailCmd.Parameters.AddWithValue("@Email", input.Email);
@@ -261,7 +254,7 @@ namespace capAPI.Controllers
                     {
                         command.CommandType = CommandType.StoredProcedure;
 
-                      
+
                         var nameParts = input.FullName.Split(' ');
                         string firstName = nameParts[0];
                         string lastName = nameParts.Length > 1 ? string.Join(" ", nameParts.Skip(1)) : "";
@@ -296,15 +289,17 @@ namespace capAPI.Controllers
                         try
                         {
                             await EmailHelper.SendOtpEmail(input.Email, "Your One-Time Sign-Up Code", "We received a request to sign Up to your account. Please use the code below to complete your sign-upn process.", otp);
+                          
                         }
                         catch (Exception emailEx)
                         {
-                            
+
                             throw new Exception("Registration failed during email sending: " + emailEx.Message);
                         }
-
+                      
                         response.UserId = userId;
                         response.Message = "Verifying your email using OTP";
+
                     }
                 }
 
@@ -315,82 +310,90 @@ namespace capAPI.Controllers
                 return StatusCode(400, new { Message = ex.Message });
             }
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        [HttpPost]
-        [Route("verify-otp")]
-        public async Task<IActionResult> VerifyOtp(VerifyOtpInput input)
+        [HttpPost("[action]")]
+        public async Task<IActionResult> Verification(VerificationInputDTO input)
         {
             try
             {
-                if (input.UserId <= 0)
-                    return BadRequest(new VerifyOtpOutput { Message = "Invalid user ID" });
-
-                if (input.NewPassword != input.ConfirmPassword)
-                    return BadRequest(new VerifyOtpOutput { Message = "Passwords do not match" });
-
-                if (!Validation.IsValidPassword(input.NewPassword))
-                    return BadRequest(new VerifyOtpOutput { Message = "Invalid password format" });
 
 
+                var user = await _context.Users
+                    .SingleOrDefaultAsync(u => u.UserId == input.Userid);
+                // الحصول على الـ OTP المناسب بناءً على الـ UserId
+                var otpEntry = await _context.UserOtpcodes
+                    .Where(o =>o.Otpcode == input.OTPCode && o.ExpiresAt > DateTime.Now)
+                    .OrderByDescending(o => o.ExpiresAt) // إذا كان هناك أكثر من OTP، نأخذ الأحدث
+                    .FirstOrDefaultAsync();
+           
+                if (otpEntry == null)
+                    return NotFound("OTP not found or expired");
+               
 
-                string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
 
-                using (SqlConnection connection = new SqlConnection(conn))
+
+                // بناءً على الـ IsSignup من UserOtpcode نقوم بالتحديث
+                if (input.type == "SignUP")
                 {
-                    await connection.OpenAsync();
+                    
+                   user.IsVerified= true;
+                    otpEntry.Otpcode = null;
+                    otpEntry.ExpiresAt = null; 
 
-                    string otpError;
-                    if (!Validation.IsValidOtp(connection, input.UserId, input.OTPCode, out otpError))
-                        return BadRequest(new VerifyOtpOutput { Message = otpError });
+                    _context.Update(user);
+                    _context.Update(otpEntry);
+                    await _context.SaveChangesAsync();
 
-                    string updatePasswordQuery = "UPDATE Users SET PasswordHash = @Password WHERE UserID = @UserID";
-                    using (SqlCommand updatePasswordCmd = new SqlCommand(updatePasswordQuery, connection))
-                    {
-                        updatePasswordCmd.Parameters.AddWithValue("@Password", input.NewPassword); 
-                        updatePasswordCmd.Parameters.AddWithValue("@UserID", input.UserId);
-
-                        int rowsAffected = await updatePasswordCmd.ExecuteNonQueryAsync();
-
-                        if (rowsAffected > 0)
-                            return Ok(new VerifyOtpOutput { Message = "Password updated successfully" });
-                        else
-                            return BadRequest(new VerifyOtpOutput { Message = "Failed to update password" });
-                    }
+                    return Ok("Your Account Is Verified");
                 }
+                else if (input.type == "ResetPassword")
+                {
+
+                    
+                    otpEntry.Otpcode = null;
+                    otpEntry.ExpiresAt = null;
+
+                    _context.Update(user);
+                    _context.Update(otpEntry);
+                    await _context.SaveChangesAsync();
+
+                    return Ok("OTP Verified Secceccfully");
+                }
+                else if (input.type == "Login")
+                {
+                    user.LastLoginTime = DateTime.Now;
+                    user.IsLoggedIn = true;
+                    otpEntry.Otpcode = null;
+                    otpEntry.IsActive = false; // إلغاء تفعيل OTP بعد تسجيل الدخول
+                    otpEntry.ExpiresAt = null;
+                    _context.Update(user);
+                    _context.Update(otpEntry);
+                    await _context.SaveChangesAsync();
+
+                    
+
+                    var jwtToken = TokenHelper.GenersteJWTToken(user.UserId.ToString(),user.RoleId.ToString());
+                    
+                    return Ok(jwtToken);
+                }
+                else return StatusCode(500, "");
             }
             catch (Exception ex)
             {
-                return BadRequest(new VerifyOtpOutput { Message = ex.Message });
+
+                var errorMessage = new StringBuilder();
+                errorMessage.AppendLine($"Message: {ex.Message}");
+
+                var inner = ex.InnerException;
+                while (inner != null)
+                {
+                    errorMessage.AppendLine($"Inner Exception: {inner.Message}");
+                    inner = inner.InnerException;
+                }
+
+                return StatusCode(500, errorMessage.ToString());
             }
         }
+
     }
 }
-
 
