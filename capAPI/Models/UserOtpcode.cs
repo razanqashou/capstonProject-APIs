@@ -18,7 +18,7 @@ public partial class UserOtpcode
 
     [Column("OTPCode")]
     [StringLength(10)]
-    public string Otpcode { get; set; } = null!;
+    public string? Otpcode { get; set; } = null!;
 
     [Column(TypeName = "datetime")]
     public DateTime CreatedAt { get; set; }

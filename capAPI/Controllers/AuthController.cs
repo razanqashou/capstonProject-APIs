@@ -105,8 +105,8 @@ namespace capAPI.Controllers
         {
             try
             {
-                string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
-
+                //   string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+                string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
                 if (string.IsNullOrEmpty(email) || !Validation.IsValidEmail(email))
                     throw new Exception("Invalid email");
                 using (SqlConnection connection = new SqlConnection(conn))
@@ -166,7 +166,7 @@ namespace capAPI.Controllers
             {
                 return StatusCode(400, ex.Message);
             }
-        
+
 
 
         }
@@ -174,60 +174,43 @@ namespace capAPI.Controllers
         //razan
         [HttpPost]
         [Route("Rest-password")]
-        public async Task<IActionResult> RestPassword(RestPasswordInput input)
+        public  async Task<IActionResult> RestPassword(ResetPersonPasswordInputDTO input)
         {
-            var response = new RestPassordOutput();
 
             try
             {
-                if (string.IsNullOrEmpty(input.Email) || !Validation.IsValidEmail(input.Email))
-                    throw new Exception("Invalid email");
 
-                string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
-
-                using (SqlConnection connection = new SqlConnection(conn))
+                var user = _context.Users.Where(u => u.UserId == input.userid 
+ ).SingleOrDefault();
+                if (user == null)
                 {
-                    connection.Open();
-
-                    string checkEmailQuery = "SELECT UserID FROM Users WHERE Email = @Email AND RoleID = 3";
-                    SqlCommand checkEmailCmd = new SqlCommand(checkEmailQuery, connection);
-                    checkEmailCmd.Parameters.AddWithValue("@Email", input.Email);
-
-                    object userIdObj = checkEmailCmd.ExecuteScalar();
-                    if (userIdObj == null)
-                        throw new Exception("No such email with RoleID 3.");
-
-                    int userId = Convert.ToInt32(userIdObj);
-                    //    string otpCode = OTPHelper.GenerateOTP();
-
-                    //    string insertOtpQuery = @"
-                    //INSERT INTO UserOTPCodes (UserID, OTPCode, ExpiresAt)
-                    //VALUES (@UserID, @OTPCode, DATEADD(HOUR, 1, GETDATE()))";
-
-                    //    SqlCommand insertOtpCmd = new SqlCommand(insertOtpQuery, connection);
-                    //    insertOtpCmd.Parameters.AddWithValue("@UserID", userId);
-                    //    insertOtpCmd.Parameters.AddWithValue("@OTPCode", otpCode);
-
-                    //    int result = insertOtpCmd.ExecuteNonQuery();
-
-                    //    if (result > 0)
-                    //    {
-                    //        response.UserId = userId;
-                    //        response.OTPCode = otpCode;
-                    //        return StatusCode(201, response); 
-                    //    }
-                    //    else
-                    //    {
-                    return StatusCode(400, "Failed to send OTP code");
-                    //}
+                    return Ok("user not found");
                 }
+
+                Validation.IsValidPassword(input.Password);
+                if (input.Password != input.ConfirmPassword)
+                {
+                    return Ok(" Cofirrm password Not Match the password");
+                }
+
+
+                user.PasswordHash = input.ConfirmPassword;
+
+
+                _context.Update(user);
+                _context.SaveChanges();
+
+                return Ok("Congradution Your password Reset Sesccefully");
+
+
+
             }
             catch (Exception ex)
             {
                 return StatusCode(400, ex.Message);
             }
         }
-
+    
 
 
         [HttpPost("signup")]
@@ -249,7 +232,7 @@ namespace capAPI.Controllers
                 Validation.IsValidPassword(input.Password);
                 Validation.IsValidBirthdate(input.Birthdate);
 
-                string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
+           string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
 
                 using (SqlConnection connection = new SqlConnection(conn))
                 {
@@ -329,32 +312,28 @@ namespace capAPI.Controllers
         {
             try
             {
-                // الحصول على الـ User بناءً على الإيميل
+
+
                 var user = await _context.Users
-                    .SingleOrDefaultAsync(u => u.Email == input.Email);
-
-                if (user == null)
-                    return NotFound("User not found");
-
+                    .SingleOrDefaultAsync(u => u.UserId == input.Userid);
                 // الحصول على الـ OTP المناسب بناءً على الـ UserId
                 var otpEntry = await _context.UserOtpcodes
-                    .Where(o => o.UserId == user.UserId && o.Otpcode == input.OTPCode && o.ExpiresAt > DateTime.Now)
+                    .Where(o =>o.Otpcode == input.OTPCode && o.ExpiresAt > DateTime.Now)
                     .OrderByDescending(o => o.ExpiresAt) // إذا كان هناك أكثر من OTP، نأخذ الأحدث
                     .FirstOrDefaultAsync();
            
                 if (otpEntry == null)
                     return NotFound("OTP not found or expired");
-                if (user.IsLoggedIn==true )
-                    return BadRequest("User is already logged in");
+               
 
 
 
                 // بناءً على الـ IsSignup من UserOtpcode نقوم بالتحديث
-                if (input.IsSignup == true)
+                if (input.type == "SignUP")
                 {
                     
-                    user.IsVerified = true;
-  
+                   user.IsVerified= true;
+                    otpEntry.Otpcode = null;
                     otpEntry.ExpiresAt = null; 
 
                     _context.Update(user);
@@ -363,20 +342,37 @@ namespace capAPI.Controllers
 
                     return Ok("Your Account Is Verified");
                 }
-                else
+                else if (input.type == "ResetPassword")
+                {
+
+                    
+                    otpEntry.Otpcode = null;
+                    otpEntry.ExpiresAt = null;
+
+                    _context.Update(user);
+                    _context.Update(otpEntry);
+                    await _context.SaveChangesAsync();
+
+                    return Ok("OTP Verified Secceccfully");
+                }
+                else if (input.type == "Login")
                 {
                     user.LastLoginTime = DateTime.Now;
                     user.IsLoggedIn = true;
+                    otpEntry.Otpcode = null;
                     otpEntry.IsActive = false; // إلغاء تفعيل OTP بعد تسجيل الدخول
                     otpEntry.ExpiresAt = null;
                     _context.Update(user);
                     _context.Update(otpEntry);
                     await _context.SaveChangesAsync();
 
+                    
+
                     var jwtToken = TokenHelper.GenersteJWTToken(user.UserId.ToString(),user.RoleId.ToString());
                     
                     return Ok(jwtToken);
                 }
+                else return StatusCode(500, "");
             }
             catch (Exception ex)
             {
