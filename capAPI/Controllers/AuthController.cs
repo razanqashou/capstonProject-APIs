@@ -19,9 +19,11 @@ namespace capAPI.Controllers
     public class AuthController : ControllerBase
     {
         private readonly DBCapstoneContext _context;
-        public AuthController(DBCapstoneContext context)
+        private readonly string _connectionString;
+        public AuthController(DBCapstoneContext context, IConfiguration configuration)
         {
             _context = context;
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
         }
         [HttpPost]
         [Route("login")]
@@ -31,19 +33,19 @@ namespace capAPI.Controllers
 
             try
             {
-                string conn = "Server=MSI\\SQLEXPRESS13;Database=DatabaseEdit;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+              //  string conn = "Server=MSI\\SQLEXPRESS13;Database=DatabaseEdit;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
 
 
                 if (string.IsNullOrEmpty(input.Email) || string.IsNullOrEmpty(input.Password))
                     throw new Exception("Invalid email or password");
 
-                using (SqlConnection connection = new SqlConnection(conn))
+                using (SqlConnection connection = new SqlConnection(_connectionString))
                 {
                     await connection.OpenAsync();
 
-
                     string selectQuery = "SELECT TOP 1 * FROM USERS WHERE Email = @Email AND PasswordHash = @Password AND IsLoggedIn = 0 AND RoleID = 3";
                     SqlCommand selectCommand = new SqlCommand(selectQuery, connection);
+
                     selectCommand.Parameters.AddWithValue("@Email", input.Email);
                     selectCommand.Parameters.AddWithValue("@Password", input.Password);
 
@@ -110,11 +112,11 @@ namespace capAPI.Controllers
             var response = new SignUpOutput();
             try
             {
-                  string conn = "Server=MSI\\SQLEXPRESS13;Database=DatabaseEdit;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+               //   string conn = "Server=MSI\\SQLEXPRESS13;Database=DatabaseEdit;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
                // string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
-                if (string.IsNullOrEmpty(email) || !Validation.IsValidEmail(email))
+                if (string.IsNullOrEmpty(email) || Validation.IsValidEmail(email))
                     throw new Exception("Invalid email");
-                using (SqlConnection connection = new SqlConnection(conn))
+                using (SqlConnection connection = new SqlConnection(_connectionString))
                 {
                     await connection.OpenAsync();
 
@@ -226,23 +228,24 @@ namespace capAPI.Controllers
 
             try
             {
-                if (string.IsNullOrEmpty(input.Email) || string.IsNullOrEmpty(input.Password) ||
+                if (string.IsNullOrEmpty(input.Password) ||
                     string.IsNullOrEmpty(input.FullName) || string.IsNullOrEmpty(input.Phone))
                 {
                     throw new Exception("All fields are required");
                 }
 
+ 
                 Validation.IsValidEmail(input.Email);
                 Validation.IsValidPhone(input.Phone);
                 Validation.IsValidFullName(input.FullName);
                 Validation.IsValidPassword(input.Password);
                 Validation.IsValidBirthdate(input.Birthdate);
-                string conn = "Server=MSI\\SQLEXPRESS13;Database=DatabaseEdit;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+                //string conn = "Server=MSI\\SQLEXPRESS13;Database=DatabaseEdit;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
 
 
                 // string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
 
-                using (SqlConnection connection = new SqlConnection(conn))
+                using (SqlConnection connection = new SqlConnection(_connectionString))
                 {
                     connection.Open();
 
