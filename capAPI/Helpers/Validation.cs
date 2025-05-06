@@ -6,56 +6,19 @@ namespace capAPI.Helpers
 {
     public static class Validation
     {
-
         public static bool IsValidEmail(string email)
         {
-            
             if (string.IsNullOrWhiteSpace(email))
-                return false;
+                throw new Exception("Email is required.");
 
-            
-            if (email.Length > 254)
-                return false;
+            string pattern = @"^[a-zA-Z0-9._%+-]+@(gmail|yahoo|outlook|hotmail)\.com$";
 
-            
-            var parts = email.Split('@');
-            if (parts.Length != 2)
-                return false;
-
-            string localPart = parts[0];
-            string domain = parts[1].ToLower();
-
-            
-            if (localPart.Length == 0 || localPart.Length > 64)
-                return false;
-
-            
-            var allowedDomains = new[] { "gmail.com", "yahoo.com", "outlook.com", "hotmail.com" };
-            if (!allowedDomains.Contains(domain))
-                return false;
-
-         
-            if (localPart.StartsWith('.') || localPart.EndsWith('.'))
-                return false;
-
-           
-            if (localPart.Contains(".."))
-                return false;
-
-           
-            foreach (char c in localPart)
-            {
-                if (!(char.IsLetterOrDigit(c)
-                      || c == '.' || c == '-' || c == '_'
-                      || c == '+' || c == '%'))
-                {
-                    return false;
-                }
-            }
+            if (!Regex.IsMatch(email, pattern, RegexOptions.IgnoreCase))
+                throw new Exception("Invalid email format. Only Gmail, Yahoo, Outlook, and Hotmail (.com) are allowed.");
 
             return true;
         }
-
+      
 
         public static bool IsValidPassword(string password)
         {
