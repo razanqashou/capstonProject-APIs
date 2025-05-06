@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
+using capAPI.DTOs.Request;
 using Microsoft.Data.SqlClient;
 
 namespace capAPI.Helpers
@@ -79,48 +80,35 @@ namespace capAPI.Helpers
 
             return true;
         }
-        public static bool IsValidOtp(SqlConnection connection, int userId, string inputOtp, out string errorMessage)
-        {
-            errorMessage = "";
 
-            string checkOtpQuery = @"
-            SELECT TOP 1 OTPCode, ExpiresAt 
-            FROM UserOTPCodes 
-            WHERE UserID = @UserID 
-            ORDER BY ExpiresAt DESC";
-
-            using (SqlCommand cmd = new SqlCommand(checkOtpQuery, connection))
+       
+            // Method to validate required fields
+            public static string ValidateRequiredFieldsItemOption(CreateItemOption input)
             {
-                cmd.Parameters.AddWithValue("@UserID", userId);
-
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                if (string.IsNullOrEmpty(input.NameAr))
                 {
-                    if (!reader.Read())
-                    {
-                        errorMessage = "OTP not found or expired";
-                        return false;
-                    }
-
-                    string storedOtp = reader["OTPCode"].ToString();
-                    DateTime expiresAt = Convert.ToDateTime(reader["ExpiresAt"]);
-
-                    if (storedOtp != inputOtp)
-                    {
-                        errorMessage = "Invalid OTP code";
-                        return false;
-                    }
-
-                    if (expiresAt < DateTime.Now)
-                    {
-                        errorMessage = "OTP code has expired";
-                        return false;
-                    }
-
-                    return true;
+                    return "NameAr is required.";
                 }
 
+                if (string.IsNullOrEmpty(input.NameEn))
+                {
+                    return "NameEn is required.";
+                }
+
+                if (input.ItemId <= 0)
+                {
+                    return "ItemId is required and must be greater than 0.";
+                }
+
+                if (input.OptionCategoryId <= 0)
+                {
+                    return "OptionCategoryId is required and must be greater than 0.";
+                }
+
+                return null; // Return null if no validation errors
             }
-        }
+        
+
     }
 }
 

@@ -88,8 +88,8 @@ public partial class DBCapstoneContext : DbContext
     public virtual DbSet<WalletTransaction> WalletTransactions { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    
-        => optionsBuilder.UseSqlServer("DefaultConnection");
+
+    { }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
