@@ -1,4 +1,4 @@
-﻿namespace capAPI.DTOs.Request
+﻿namespace capAPI.DTOs.Request.ItemOption
 {
     public class UpdateItemOption
     {
@@ -8,9 +8,9 @@
         public int ItemId { get; set; }
 
 
-        public string? NameAr { get; set; } 
+        public string? NameAr { get; set; }
 
-        public string? NameEn { get; set; } 
+        public string? NameEn { get; set; }
 
 
         public int? OptionCategoryId { get; set; }
@@ -28,7 +28,7 @@
 
         public string? UpdatedBy { get; set; }
 
-   
+
 
 
 
