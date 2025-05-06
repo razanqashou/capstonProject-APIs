@@ -21,26 +21,26 @@ var app = builder.Build();
 
 
 
-//if (app.Environment.IsDevelopment())
-//{
-
-
-//    app.UseSwagger();
-
-
-
-
-//     app.UseSwaggerUI();
-//}
-
-
-app.UseSwagger();
-
-app.UseSwaggerUI(o =>
+if (app.Environment.IsDevelopment())
 {
-    o.SwaggerEndpoint("/swagger/v1/swagger.json", "Capaston v1");
-    o.RoutePrefix = string.Empty;  
-});
+
+
+    app.UseSwagger();
+
+
+
+
+    app.UseSwaggerUI();
+}
+
+
+//app.UseSwagger();
+
+//app.UseSwaggerUI(o =>
+//{
+//    o.SwaggerEndpoint("/swagger/v1/swagger.json", "Capaston v1");
+//    o.RoutePrefix = string.Empty;  
+//});
 
 
 app.UseHttpsRedirection();
