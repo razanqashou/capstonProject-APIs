@@ -6,27 +6,40 @@ namespace capAPI.Helpers
 {
     public static class EmailHelper
     {
-        public  static async Task SendOtpEmail(string userEmail, string title, string message, string otpCode)
-        {
-            string apiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
-            if (string.IsNullOrEmpty(apiKey))
-            {
-                throw new Exception("SendGrid API key is missing from environment variables.");
-            }
+        private static string _apiKey;
+        private static string _fromEmail;
+        private static string _fromName;
 
-            var client = new SendGridClient(apiKey);
-            var from = new EmailAddress("razanqashou777@gmail.com", "Capstone");
+        
+        public static void Init(IConfiguration configuration)
+        {
+            _apiKey = configuration["SendGrid:ApiKey"];
+            _fromEmail = configuration["SendGrid:FromEmail"];
+            _fromName = configuration["SendGrid:FromName"];
+
+            if (string.IsNullOrWhiteSpace(_apiKey))
+                throw new Exception("SendGrid API key is missing in configuration.");
+        }
+
+        public static async Task SendOtpEmail(
+            string userEmail,
+            string subject,
+            string message,
+            string otpCode)
+        {
+            var client = new SendGridClient(_apiKey);
+            var from = new EmailAddress(_fromEmail, _fromName);
             var to = new EmailAddress(userEmail);
-            var subject = title;
-            var plainTextContent = $"Dear User, {message} Please use the following OTP code: {otpCode}";
+            var plain = $"Dear User, {message} Your code: {otpCode}";
+            var msg = MailHelper.CreateSingleEmail(from, to, subject, plain, null);
 
             var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, null);
             var response = await client.SendEmailAsync(msg);
 
             if ((int)response.StatusCode >= 400)
             {
-                var responseBody = await response.Body.ReadAsStringAsync();
-                throw new Exception($"SendGrid Error: {response.StatusCode} - {responseBody}");
+                var body = await response.Body.ReadAsStringAsync();
+                throw new Exception($"SendGrid Error: {response.StatusCode} – {body}");
             }
         }
 

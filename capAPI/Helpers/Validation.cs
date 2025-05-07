@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
+using capAPI.DTOs.Request.ItemOption;
 using Microsoft.Data.SqlClient;
 
 namespace capAPI.Helpers
@@ -10,31 +11,16 @@ namespace capAPI.Helpers
         public static bool IsValidEmail(string email)
         {
             if (string.IsNullOrWhiteSpace(email))
-                return false;
+                throw new Exception("Email is required.");
 
-            int atIndex = email.IndexOf('@');
-            int dotIndex = email.LastIndexOf('.');
+            string pattern = @"^[a-zA-Z0-9._%+-]+@(gmail|yahoo|outlook|hotmail)\.com$";
 
-            if (atIndex < 1 || dotIndex < atIndex + 2 || dotIndex >= email.Length - 2)
-                return false;
-
-            string domain = email.Substring(atIndex + 1, dotIndex - atIndex - 1);
-            string extension = email.Substring(dotIndex + 1);
-
-            if (domain.Length < 2 || extension.Length < 2)
-                return false;
-
-            string localPart = email.Substring(0, atIndex);
-            foreach (char c in localPart)
-            {
-                if (!(char.IsLetterOrDigit(c) || c == '.' || c == '-' || c == '_' || c == '+' || c == '%'))
-                {
-                    return false;
-                }
-            }
+            if (!Regex.IsMatch(email, pattern, RegexOptions.IgnoreCase))
+                throw new Exception("Invalid email format. Only Gmail, Yahoo, Outlook, and Hotmail (.com) are allowed.");
 
             return true;
         }
+      
 
         public static bool IsValidPassword(string password)
         {
@@ -108,35 +94,34 @@ namespace capAPI.Helpers
             using (SqlCommand cmd = new SqlCommand(checkOtpQuery, connection))
             {
                 cmd.Parameters.AddWithValue("@UserID", userId);
-
-                using (SqlDataReader reader = cmd.ExecuteReader())
+       
+            // Method to validate required fields
+            public static string ValidateRequiredFieldsItemOption(CreateItemOption input)
+            {
+                if (string.IsNullOrEmpty(input.NameAr))
                 {
-                    if (!reader.Read())
-                    {
-                        errorMessage = "OTP not found or expired";
-                        return false;
-                    }
-
-                    string storedOtp = reader["OTPCode"].ToString();
-                    DateTime expiresAt = Convert.ToDateTime(reader["ExpiresAt"]);
-
-                    if (storedOtp != inputOtp)
-                    {
-                        errorMessage = "Invalid OTP code";
-                        return false;
-                    }
-
-                    if (expiresAt < DateTime.Now)
-                    {
-                        errorMessage = "OTP code has expired";
-                        return false;
-                    }
-
-                    return true;
+                    return "NameAr is required.";
                 }
 
+                if (string.IsNullOrEmpty(input.NameEn))
+                {
+                    return "NameEn is required.";
+                }
+
+                if (input.ItemId <= 0)
+                {
+                    return "ItemId is required and must be greater than 0.";
+                }
+
+                if (input.OptionCategoryId <= 0)
+                {
+                    return "OptionCategoryId is required and must be greater than 0.";
+                }
+
+                return null; // Return null if no validation errors
             }
-        }
+        
+
     }
 }
 
