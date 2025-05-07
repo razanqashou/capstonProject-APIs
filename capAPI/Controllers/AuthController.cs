@@ -171,7 +171,7 @@ namespace capAPI.Controllers
 
         }
 
-        //razan
+       
         [HttpPost]
         [Route("Rest-password")]
         public  async Task<IActionResult> RestPassword(ResetPersonPasswordInputDTO input)
@@ -316,19 +316,16 @@ namespace capAPI.Controllers
 
                 var user = await _context.Users
                     .SingleOrDefaultAsync(u => u.UserId == input.Userid);
-                // الحصول على الـ OTP المناسب بناءً على الـ UserId
+               
                 var otpEntry = await _context.UserOtpcodes
                     .Where(o =>o.Otpcode == input.OTPCode && o.ExpiresAt > DateTime.Now)
-                    .OrderByDescending(o => o.ExpiresAt) // إذا كان هناك أكثر من OTP، نأخذ الأحدث
+                    .OrderByDescending(o => o.ExpiresAt) 
                     .FirstOrDefaultAsync();
            
                 if (otpEntry == null)
                     return NotFound("OTP not found or expired");
                
-
-
-
-                // بناءً على الـ IsSignup من UserOtpcode نقوم بالتحديث
+           
                 if (input.type == "SignUP")
                 {
                     
@@ -360,7 +357,7 @@ namespace capAPI.Controllers
                     user.LastLoginTime = DateTime.Now;
                     user.IsLoggedIn = true;
                     otpEntry.Otpcode = null;
-                    otpEntry.IsActive = false; // إلغاء تفعيل OTP بعد تسجيل الدخول
+                    otpEntry.IsActive = false; 
                     otpEntry.ExpiresAt = null;
                     _context.Update(user);
                     _context.Update(otpEntry);
