@@ -101,9 +101,9 @@ namespace capAPI.Controllers
                 if (offerItem == null)
                     return NotFound("Offer item not found.");
 
-                var dto = new OfferItemOutputDTO
+                var dto = new SpesificOfferItem
                 {
-                    OfferItemId = offerItem.OfferItemId,
+                  
                     OfferID = offerItem.OfferId,
                     ItemID = offerItem.ItemId
                 };
@@ -115,6 +115,35 @@ namespace capAPI.Controllers
                 return StatusCode(400, ex.Message);
             }
         }
+
+        [HttpGet]
+        [Route("GetAllOfferItems")]
+        public async Task<IActionResult> GetAllOfferItems()
+        {
+            try
+            {
+                var offerItems = await _context.OfferItems
+                    .Select(offerItem => new OfferItemOutputDTO
+                    {
+                        OfferItemId = offerItem.OfferItemId,
+                        OfferID = offerItem.OfferId,
+                        ItemID = offerItem.ItemId
+                    })
+                    .ToListAsync();
+
+                if (offerItems == null || !offerItems.Any())
+                {
+                    return NotFound("No offer items found.");
+                }
+
+                return Ok(offerItems);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(400, ex.Message);
+            }
+        }
+
 
         [HttpDelete]
         [Route("DeleteOfferItem/{id}")]
@@ -216,9 +245,8 @@ namespace capAPI.Controllers
                 if (offerItem == null)
                     return NotFound("Offer Category not found.");
 
-                var dto = new OfferCategoryOutputDTO
+                var dto = new SpesificOfferCategoryDTO
                 {
-                    OfferCategoryId = offerItem.OfferCategoryId,
                     OfferID = offerItem.OfferId,
                     CategoryId = offerItem.CategoryId
                 };
@@ -254,6 +282,33 @@ namespace capAPI.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("GetAllOfferCategories")]
+        public async Task<IActionResult> GetAllOfferCategories()
+        {
+            try
+            {
+                var offerCategories = await _context.OfferCategories
+                    .Select(offerCategory => new OfferCategoryOutputDTO
+                    {
+                        OfferCategoryId = offerCategory.OfferCategoryId,
+                        OfferID = offerCategory.OfferId,
+                        CategoryId = offerCategory.CategoryId
+                    })
+                    .ToListAsync();
+
+                if (offerCategories == null || !offerCategories.Any())
+                {
+                    return NotFound("No offer categories found.");
+                }
+
+                return Ok(offerCategories);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(400, ex.Message);
+            }
+        }
 
 
 

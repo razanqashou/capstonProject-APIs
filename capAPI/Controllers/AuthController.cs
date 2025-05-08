@@ -33,7 +33,7 @@ namespace capAPI.Controllers
 
             try
             {
-              //  string conn = "Server=MSI\\SQLEXPRESS13;Database=DatabaseEdit;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+               // string conn = "Server=MSI\\SQLEXPRESS13;Database=DatabaseEdit;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
 
 
                 if (string.IsNullOrEmpty(input.Email) || string.IsNullOrEmpty(input.Password))

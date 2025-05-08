@@ -5,6 +5,7 @@ using capAPI.Helpers;
 using capAPI.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace capAPI.Controllers
 {
@@ -64,16 +65,14 @@ namespace capAPI.Controllers
                 await _context.SaveChangesAsync();
 
 
-                ItemOptionOutputDTO itemOptionDTO = new ItemOptionOutputDTO
+                ItemOptionDto itemOptionDTO = new ItemOptionDto
                 {
                     OptionId=itemOption.OptionId,
-                    ItemId = itemOption.ItemId,
                     NameAr = itemOption.NameAr,
-                    PriceAfterDiscount = input.PriceAfterDiscount,
                     NameEn = itemOption.NameEn,
-                    OptionCategoryId = itemOption.OptionCategoryId,
-                    IsRequired = itemOption.IsRequired,
-                    Quantity = itemOption.Quantity
+                    PriceAfterDiscount = input.PriceAfterDiscount ?? 0,
+                    
+                   
                 };
                 return Ok(itemOptionDTO);
             }
@@ -145,16 +144,16 @@ namespace capAPI.Controllers
                     return NotFound("Item option not found.");
                 }
 
-                ItemOptionOutputDTO itemOptionDTO = new ItemOptionOutputDTO
+                SpesificItemOptionOutputDTO itemOptionDTO = new SpesificItemOptionOutputDTO
                 {
-                    OptionId = itemOption.OptionId,
+                  
                     ItemId = itemOption.ItemId,
                     NameAr = itemOption.NameAr,
                     NameEn = itemOption.NameEn,
                     OptionCategoryId = itemOption.OptionCategoryId,
-                    IsRequired = itemOption.IsRequired,
-                    PriceAfterDiscount = itemOption.PriceAfterDiscount,
-                    Quantity = itemOption.Quantity
+                    IsRequired = itemOption.IsRequired ?? true,
+                    PriceAfterDiscount = itemOption.PriceAfterDiscount ??0,
+                    Quantity = itemOption.Quantity ?? 0
                 };
 
                 return Ok(itemOptionDTO);
@@ -191,5 +190,38 @@ namespace capAPI.Controllers
             }
 
         }
+
+
+        [HttpGet]
+        [Route("GetAllItemOptions")]
+        public async Task<IActionResult> GetAllItemOptions()
+        {
+            try
+            {
+                var itemOptions = await _context.ItemOptions
+                    .Select(itemOption => new ItemOptionDto
+                    {
+                        OptionId = itemOption.OptionId,
+                 
+                        NameAr = itemOption.NameAr,
+                        NameEn = itemOption.NameEn,
+                        PriceAfterDiscount = itemOption.PriceAfterDiscount ?? 0,
+                       
+                    })
+                    .ToListAsync();
+
+                if (itemOptions == null || !itemOptions.Any())
+                {
+                    return NotFound("No item options found.");
+                }
+
+                return Ok(itemOptions);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(400, ex.Message);
+            }
+        }
+
     }
 }

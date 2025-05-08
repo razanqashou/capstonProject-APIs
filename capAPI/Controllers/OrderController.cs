@@ -135,6 +135,9 @@ namespace capAPI.Controllers
 
             return Ok(orderItemDetails);
         }
+
+
+
         [HttpPut("UpdateOrderItem")]
         public IActionResult UpdateOrderItem(UpdateOrderItem dto)
         {
@@ -206,7 +209,7 @@ namespace capAPI.Controllers
                 
                      orderItem.DiscountValue = discountValue * orderItem.Quantity;
 
-                  //  Console.WriteLine($"Received DiscountValue: {dto.DiscountValue}");
+                 
                 }
 
                
@@ -234,6 +237,8 @@ namespace capAPI.Controllers
             }
         }
 
+
+
         [HttpDelete("DeleteOrderItem/{id}")]
         public IActionResult DeleteOrderItem(int id)
         {
@@ -256,6 +261,34 @@ namespace capAPI.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+
+
+        [HttpGet("GetAllOrderItems")]
+        public IActionResult GetAllOrderItems()
+        {
+            try
+            {
+                var orderItems = _context.OrderItems.ToList();
+
+                if (!orderItems.Any())
+                    return NotFound("No order items found.");
+
+                var result = orderItems.Select(orderItem => new OrderItemOutPut
+                {
+                    OrderItemId = orderItem.OrderItemId,
+                    OrderId = orderItem.OrderId,
+                    ItemId = orderItem.ItemId,
+                    
+                }).ToList();
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
 
     }
 }
