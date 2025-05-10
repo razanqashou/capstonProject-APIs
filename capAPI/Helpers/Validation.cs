@@ -12,10 +12,10 @@ namespace capAPI.Helpers
             if (string.IsNullOrWhiteSpace(email))
                 throw new Exception("Email is required.");
 
-            string pattern = @"^[a-zA-Z0-9._%+-]+@(gmail|yahoo|outlook|hotmail)\.com$";
+            string pattern = @"^[a-zA-Z0-9._%+-]+@(gmail|zoho|outlook|hotmail)\.com$";
 
             if (!Regex.IsMatch(email, pattern, RegexOptions.IgnoreCase))
-                throw new Exception("Invalid email format. Only Gmail, Yahoo, Outlook, and Hotmail (.com) are allowed.");
+                throw new Exception("Invalid email format. Only Gmail, zoho, Outlook, and Hotmail (.com) are allowed.");
 
             return true;
         }
@@ -61,9 +61,9 @@ namespace capAPI.Helpers
             if (string.IsNullOrWhiteSpace(phone))
                 throw new Exception("Phone number is required");
 
-
-            if (!Regex.IsMatch(phone, @"^07\d{8}$"))
-                throw new Exception("Phone number must start with 07 and be 10 digits long");
+          
+            if (!Regex.IsMatch(phone, @"^07[7-9]\d{7}$"))
+                throw new Exception("Phone number must start with 077, 078, or 079 and be 10 digits long");
 
             return true;
         }
@@ -73,6 +73,8 @@ namespace capAPI.Helpers
             if (string.IsNullOrWhiteSpace(fullName))
                 throw new Exception("Full name is required");
 
+            if (fullName.Length < 3)
+                throw new Exception("Full name must be at least 3 characters long");
 
             var regex = new Regex(@"^[\p{L} ]+$");
             if (!regex.IsMatch(fullName))
@@ -81,9 +83,10 @@ namespace capAPI.Helpers
             return true;
         }
 
-       
-            // Method to validate required fields
-            public static string ValidateRequiredFieldsItemOption(CreateItemOption input)
+
+
+        
+        public static string ValidateRequiredFieldsItemOption(CreateItemOption input)
             {
                 if (string.IsNullOrEmpty(input.NameAr))
                 {
@@ -105,7 +108,7 @@ namespace capAPI.Helpers
                     return "OptionCategoryId is required and must be greater than 0.";
                 }
 
-                return null; // Return null if no validation errors
+                return null; 
             }
         
 
