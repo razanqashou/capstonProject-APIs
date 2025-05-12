@@ -1,4 +1,5 @@
 ﻿using capAPI.DTOs.Request;
+using capAPI.DTOs.Request.Item;
 using capAPI.DTOs.Request.ItemOption;
 using capAPI.DTOs.Responce;
 using capAPI.Helpers;
@@ -16,15 +17,136 @@ namespace capAPI.Controllers
 
 
         private readonly DBCapstoneContext _context;
-       
+
         public ItemController(DBCapstoneContext context)
         {
             _context = context;
-           
+
         }
 
 
 
+        // **Create Item**
+        [HttpPost("create-item ")]
+        public async Task<IActionResult> CreateItem([FromForm] CreatItemInputDTO dto, IFormFile imageFile)
+        {
+            var errors = Validation.Validate(dto, imageFile, _context.Categories.ToList());
+
+            if (errors.Any())
+            {
+                return BadRequest(new { message = "Validation failed", errors });
+            }
+            var item = new Item
+            {
+                NameEn = dto.NameEn,
+                NameAr = dto.NameAr,
+                DescriptionEn = dto.DescriptionEn,
+                DescriptionAr = dto.DescriptionAr,
+                Price = dto.Price,
+                CategoryId = dto.CategoryId,
+                IsActive = true, 
+                CreatedBy = "Admin", 
+                CreatedAt = DateTime.UtcNow 
+            };
+
+            
+            _context.Items.Add(item);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "New Item Has Been Created" });
+        }
+
+        
+        [HttpPut("update/{id}")]
+        public async Task<IActionResult> UpdateItem(int id, [FromBody] CreatItemInputDTO dto, IFormFile imageFile)
+        {
+            var errors = Validation.Validate(dto, imageFile, _context.Categories.ToList());
+
+            if (errors.Any())
+            {
+                return BadRequest(new { message = "Validation failed", errors });
+            }
+
+            var item = await _context.Items.FindAsync(id);
+
+            if (item == null)
+            {
+                return NotFound(new { message = "Item not found" });
+            }
+
+            item.NameEn = dto.NameEn;
+            item.NameAr = dto.NameAr;
+            item.DescriptionEn = dto.DescriptionEn;
+            item.DescriptionAr = dto.DescriptionAr;
+            item.Price = dto.Price;
+            item.CategoryId = dto.CategoryId;
+
+            if (imageFile != null && imageFile.Length > 0)
+            {
+                item.Image = await SaveImage(imageFile);
+            }
+
+            item.UpdatedBy = "Admin"; 
+            item.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Item Has Been Updated" });
+        }
+
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllItems()
+        {
+            var items = await _context.Items.ToListAsync();
+            if (items == null || !items.Any())
+            {
+                return NotFound(new { message = "No items found." });
+            }
+            return Ok(items);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetItemById(int id)
+        {
+            var item = await _context.Items.FindAsync(id);
+
+            if (item == null)
+            {
+                return NotFound(new { message = "Item not found" });
+            }
+
+            return Ok(item);
+        }
+
+        [HttpDelete("delete/{id}")]
+        public async Task<IActionResult> DeleteItem(int id)
+        {
+            var item = await _context.Items.FindAsync(id);
+
+            if (item == null)
+            {
+                return NotFound(new { message = "Item not found" });
+            }
+
+            _context.Items.Remove(item);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Item has been deleted successfully." });
+        }
+
+        
+        private async Task<string> SaveImage(IFormFile imageFile)
+        {
+            var filePath = Path.Combine("wwwroot/images", Guid.NewGuid().ToString() + Path.GetExtension(imageFile.FileName));
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await imageFile.CopyToAsync(stream);
+            }
+
+            return filePath;
+        }
+    
 
 
 

@@ -44,7 +44,7 @@ namespace capAPI.Controllers
                     await connection.OpenAsync();
 
 
-                    string selectQuery = "SELECT TOP 1 * FROM USERS WHERE Email = @Email AND PasswordHash = @Password AND IsLoggedIn = 0 AND RoleID = 3 And IsVerified = 1";
+                    string selectQuery = "SELECT TOP 1 * FROM USERS WHERE Email = @Email AND PasswordHash = @Password AND IsLoggedIn = 0 AND RoleID = 3 AND ISVerified=1";
                     SqlCommand selectCommand = new SqlCommand(selectQuery, connection);
 
                     selectCommand.Parameters.AddWithValue("@Email", input.Email);
@@ -162,12 +162,12 @@ namespace capAPI.Controllers
                     response.UserId= userId;
                     response.Message = "OTP sent successfully";
 
+                }
 
                     return StatusCode(200, response);
 
 
-                }
-
+               
 
             }
             catch (Exception ex)
@@ -179,36 +179,36 @@ namespace capAPI.Controllers
 
         }
 
-        //razan
-        [HttpPost]
-        [Route("Rest-password")]
-        public  async Task<IActionResult> RestPassword(ResetPersonPasswordInputDTO input)
+
+[HttpPost]
+[Route("Rest-password")]
+public async Task<IActionResult> RestPassword(ResetPersonPasswordInputDTO input)
+{
+
+    try
+    {
+
+        var user = _context.Users.Where(u => u.UserId == input.userid && u.IsVerified==true
+         ).SingleOrDefault();
+        if (user == null)
         {
+            return Ok("user not found");
+        }
 
-            try
-            {
-
-                var user = _context.Users.Where(u => u.UserId == input.userid 
-                 ).SingleOrDefault();
-                if (user == null)
-                {
-                    return Ok("user not found");
-                }
-
-                Validation.IsValidPassword(input.Password);
-                if (input.Password != input.ConfirmPassword)
-                {
-                    return Ok(" Cofirrm password Not Match the password");
-                }
+        Validation.IsValidPassword(input.Password);
+        if (input.Password != input.ConfirmPassword)
+        {
+            return Ok(" Cofirrm password Not Match the password");
+        }
 
 
-                user.PasswordHash = input.ConfirmPassword;
+        user.PasswordHash = input.ConfirmPassword;
 
 
-                _context.Update(user);
-                _context.SaveChanges();
+        _context.Update(user);
+        _context.SaveChanges();
 
-                return Ok("Congradution Your password Reset Sesccefully");
+        return Ok("Congratulations Your password Reset Sesccefully");
 
 
 
@@ -221,7 +221,7 @@ namespace capAPI.Controllers
 
        
 
-        [HttpPost("signup")]
+[HttpPost("signup")]
         public async Task<IActionResult> SignUp([FromBody] SignUpInput input)
         {
             var response = new SignUpOutput();
@@ -343,8 +343,8 @@ namespace capAPI.Controllers
                     
                    user.IsVerified= true;
                     otpEntry.Otpcode = null;
-                    otpEntry.ExpiresAt = null; 
-
+                    otpEntry.ExpiresAt = null;
+                    
                     _context.Update(user);
                     _context.Update(otpEntry);
                     await _context.SaveChangesAsync();

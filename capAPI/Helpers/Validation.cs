@@ -1,12 +1,23 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
 using capAPI.DTOs.Request.ItemOption;
+using capAPI.DTOs.Request.Item;
 using Microsoft.Data.SqlClient;
+using Microsoft.AspNetCore.Components.Forms;
+using capAPI.Models;
+using static System.Net.Mime.MediaTypeNames;
+
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats;
+using System.Linq;
+
 
 namespace capAPI.Helpers
 {
     public static class Validation
     {
+
         public static bool IsValidEmail(string email)
         {
             if (string.IsNullOrWhiteSpace(email))
@@ -108,11 +119,67 @@ namespace capAPI.Helpers
                     return "OptionCategoryId is required and must be greater than 0.";
                 }
 
-                return null; 
+            return null; // Return null if no validation errors
+        }
+
+
+        public static List<string> Validate(CreatItemInputDTO dto, IFormFile? imageFile, List<Category> availableCategories)
+        {
+            var errors = new List<string>();
+
+            // Arabic validation (only Arabic letters + space)
+            if (string.IsNullOrWhiteSpace(dto.NameAr) || !Regex.IsMatch(dto.NameAr, @"^[\u0621-\u064A\s]+$"))
+                errors.Add("Arabic Name must contain only Arabic letters and spaces.");
+
+            if (!string.IsNullOrWhiteSpace(dto.DescriptionAr) && !Regex.IsMatch(dto.DescriptionAr, @"^[\u0621-\u064A\s]*$"))
+                errors.Add("Arabic Description must contain only Arabic letters and spaces.");
+
+            // English validation (only English letters + space)
+            if (string.IsNullOrWhiteSpace(dto.NameEn) || !Regex.IsMatch(dto.NameEn, @"^[a-zA-Z\s]+$"))
+                errors.Add("English Name must contain only English letters and spaces.");
+
+            if (!string.IsNullOrWhiteSpace(dto.DescriptionEn) && !Regex.IsMatch(dto.DescriptionEn, @"^[a-zA-Z\s]*$"))
+                errors.Add("English Description must contain only English letters and spaces.");
+
+            // Price validation
+            if (dto.Price <= 0)
+                errors.Add("Price must be a positive number greater than 0.");
+
+            // Category validation
+            if (!availableCategories.Any(c => c.CategoryId== dto.CategoryId))
+                errors.Add("Selected category is not available.");
+
+            // Image validation
+            if (imageFile == null || imageFile.Length == 0)
+            {
+                errors.Add("Image file is required.");
             }
-        
+            else
+            {
+                var extension = Path.GetExtension(imageFile.FileName).ToLower();
+                var allowedExtensions = new[] { ".png", ".jpg", ".jpeg", ".webp" };
+
+                if (!allowedExtensions.Contains(extension))
+                    errors.Add("Image must be .png, .jpg, .jpeg, or .webp.");
+
+                try
+                {
+                    using var image = SixLabors.ImageSharp.Image.Load(imageFile.OpenReadStream());
+                    if (image.Width != 780 || image.Height != 380)
+                        errors.Add("Image dimensions must be exactly 780x380 pixels.");
+                }
+                catch
+                {
+                    errors.Add("Invalid image file.");
+                }
+            }
+
+            return errors;
+        }
 
     }
+
 }
+
 
 
