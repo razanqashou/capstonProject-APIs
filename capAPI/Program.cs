@@ -41,7 +41,7 @@ if (app.Environment.IsDevelopment())
 //app.UseSwaggerUI(o =>
 //{
 //    o.SwaggerEndpoint("/swagger/v1/swagger.json", "Capaston v1");
-//    o.RoutePrefix = string.Empty;  
+//    o.RoutePrefix = string.Empty;
 //});
 
 
