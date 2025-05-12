@@ -33,7 +33,7 @@ namespace capAPI.Controllers
 
             try
             {
-               // string conn = "Server=MSI\\SQLEXPRESS13;Database=DatabaseEdit;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
+                string conn = _connectionString;
 
 
                 if (string.IsNullOrEmpty(input.Email) || string.IsNullOrEmpty(input.Password))
@@ -43,7 +43,8 @@ namespace capAPI.Controllers
                 {
                     await connection.OpenAsync();
 
-                    string selectQuery = "SELECT TOP 1 * FROM USERS WHERE Email = @Email AND PasswordHash = @Password AND IsLoggedIn = 0 AND RoleID = 3";
+
+                    string selectQuery = "SELECT TOP 1 * FROM USERS WHERE Email = @Email AND PasswordHash = @Password AND IsLoggedIn = 0 AND RoleID = 3 And IsVerified = 1";
                     SqlCommand selectCommand = new SqlCommand(selectQuery, connection);
 
                     selectCommand.Parameters.AddWithValue("@Email", input.Email);
@@ -112,9 +113,8 @@ namespace capAPI.Controllers
             var response = new SignUpOutput();
             try
             {
-               //   string conn = "Server=MSI\\SQLEXPRESS13;Database=DatabaseEdit;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
-               // string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
-                if (string.IsNullOrEmpty(email) || Validation.IsValidEmail(email))
+                string conn = _connectionString;
+                if (string.IsNullOrEmpty(email) || !Validation.IsValidEmail(email))
                     throw new Exception("Invalid email");
                 using (SqlConnection connection = new SqlConnection(_connectionString))
                 {
@@ -212,14 +212,14 @@ namespace capAPI.Controllers
 
 
 
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(400, ex.Message);
-            }
-        }
-    
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(400, ex.Message);
+    }
+}
 
+       
 
         [HttpPost("signup")]
         public async Task<IActionResult> SignUp([FromBody] SignUpInput input)
@@ -240,10 +240,7 @@ namespace capAPI.Controllers
                 Validation.IsValidFullName(input.FullName);
                 Validation.IsValidPassword(input.Password);
                 Validation.IsValidBirthdate(input.Birthdate);
-                //string conn = "Server=MSI\\SQLEXPRESS13;Database=DatabaseEdit;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
-
-
-                // string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
+               
 
                 using (SqlConnection connection = new SqlConnection(_connectionString))
                 {
@@ -357,10 +354,11 @@ namespace capAPI.Controllers
                 else if (input.type == "ResetPassword")
                 {
 
-                    
+
+                    user.IsVerified = true;
                     otpEntry.Otpcode = null;
                     otpEntry.ExpiresAt = null;
-
+                    user.IsVerified = true;
                     _context.Update(user);
                     _context.Update(otpEntry);
                     await _context.SaveChangesAsync();
@@ -370,6 +368,7 @@ namespace capAPI.Controllers
                 else if (input.type == "Login")
                 {
                     user.LastLoginTime = DateTime.Now;
+                    user.IsVerified = true;
                     user.IsLoggedIn = true;
                     otpEntry.Otpcode = null;
                     otpEntry.IsActive = false; 
