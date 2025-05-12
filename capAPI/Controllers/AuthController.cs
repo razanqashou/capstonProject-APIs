@@ -33,7 +33,7 @@ namespace capAPI.Controllers
 
             try
             {
-                string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
+                string conn = _connectionString;
 
 
                 if (string.IsNullOrEmpty(input.Email) || string.IsNullOrEmpty(input.Password))
@@ -44,7 +44,7 @@ namespace capAPI.Controllers
                     await connection.OpenAsync();
 
 
-                    string selectQuery = "SELECT TOP 1 * FROM USERS WHERE Email = @Email AND PasswordHash = @Password AND IsLoggedIn = 0 AND RoleID = 3";
+                    string selectQuery = "SELECT TOP 1 * FROM USERS WHERE Email = @Email AND PasswordHash = @Password AND IsLoggedIn = 0 AND RoleID = 3 AND ISVerified=1";
                     SqlCommand selectCommand = new SqlCommand(selectQuery, connection);
 
                     selectCommand.Parameters.AddWithValue("@Email", input.Email);
@@ -114,7 +114,7 @@ namespace capAPI.Controllers
             try
             {
                 //   string conn = "Server=MSI\\SQLEXPRESS13;Database=lastupdateCapstonDB.bacpac;Trusted_Connection=True;Encrypt=True;TrustServerCertificate=True;";
-                string conn = "Data Source=DESKTOP-CBGCB75;Initial Catalog=DBCapstone;Integrated Security=True;Encrypt=True;Trust Server Certificate=True";
+                string conn = _connectionString;
                 if (string.IsNullOrEmpty(email) || !Validation.IsValidEmail(email))
                     throw new Exception("Invalid email");
                 using (SqlConnection connection = new SqlConnection(_connectionString))
