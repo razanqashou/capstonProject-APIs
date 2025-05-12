@@ -30,15 +30,12 @@ namespace capAPI.Controllers
         [HttpPost("create-item ")]
         public async Task<IActionResult> CreateItem([FromForm] CreatItemInputDTO dto, IFormFile imageFile)
         {
-            // التحقق من البيانات (Validation)
             var errors = Validation.Validate(dto, imageFile, _context.Categories.ToList());
 
             if (errors.Any())
             {
                 return BadRequest(new { message = "Validation failed", errors });
             }
-
-            // إنشاء الـ Item في الـ Database
             var item = new Item
             {
                 NameEn = dto.NameEn,
@@ -47,24 +44,22 @@ namespace capAPI.Controllers
                 DescriptionAr = dto.DescriptionAr,
                 Price = dto.Price,
                 CategoryId = dto.CategoryId,
-                Image = await SaveImage(imageFile), // حفظ الصورة
-                IsActive = true, // تعيين الحالة النشطة للـ Item
-                CreatedBy = "Admin", // تعديلها حسب الحالة الفعلية
-                CreatedAt = DateTime.UtcNow // تعيين الوقت الحالي
+                IsActive = true, 
+                CreatedBy = "Admin", 
+                CreatedAt = DateTime.UtcNow 
             };
 
-            // إضافة الـ Item إلى الـ DbContext
+            
             _context.Items.Add(item);
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "New Item Has Been Created" });
         }
 
-        // **Update Item**
+        
         [HttpPut("update/{id}")]
-        public async Task<IActionResult> UpdateItem(int id, [FromForm] CreatItemInputDTO dto, IFormFile imageFile)
+        public async Task<IActionResult> UpdateItem(int id, [FromBody] CreatItemInputDTO dto, IFormFile imageFile)
         {
-            // التحقق من البيانات (Validation)
             var errors = Validation.Validate(dto, imageFile, _context.Categories.ToList());
 
             if (errors.Any())
@@ -72,7 +67,6 @@ namespace capAPI.Controllers
                 return BadRequest(new { message = "Validation failed", errors });
             }
 
-            // تحديث الـ Item في الـ Database
             var item = await _context.Items.FindAsync(id);
 
             if (item == null)
@@ -87,22 +81,19 @@ namespace capAPI.Controllers
             item.Price = dto.Price;
             item.CategoryId = dto.CategoryId;
 
-            // إذا تم تحميل صورة جديدة، نحفظها
             if (imageFile != null && imageFile.Length > 0)
             {
                 item.Image = await SaveImage(imageFile);
             }
 
-            item.UpdatedBy = "Admin"; // تعديلها حسب الحاجة
+            item.UpdatedBy = "Admin"; 
             item.UpdatedAt = DateTime.UtcNow;
 
-            // حفظ التغييرات في الـ DbContext
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Item Has Been Updated" });
         }
 
-        // **Get All Items**
         [HttpGet("all")]
         public async Task<IActionResult> GetAllItems()
         {
@@ -114,7 +105,6 @@ namespace capAPI.Controllers
             return Ok(items);
         }
 
-        // **Get Item by ID**
         [HttpGet("{id}")]
         public async Task<IActionResult> GetItemById(int id)
         {
@@ -128,7 +118,6 @@ namespace capAPI.Controllers
             return Ok(item);
         }
 
-        // **Delete Item**
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteItem(int id)
         {
@@ -139,17 +128,15 @@ namespace capAPI.Controllers
                 return NotFound(new { message = "Item not found" });
             }
 
-            // حذف الـ Item من الـ DbContext
             _context.Items.Remove(item);
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Item has been deleted successfully." });
         }
 
-        // **Save Image**
+        
         private async Task<string> SaveImage(IFormFile imageFile)
         {
-            // حفظ الصورة في المسار المناسب (مثلاً في مجلد wwwroot/images)
             var filePath = Path.Combine("wwwroot/images", Guid.NewGuid().ToString() + Path.GetExtension(imageFile.FileName));
 
             using (var stream = new FileStream(filePath, FileMode.Create))

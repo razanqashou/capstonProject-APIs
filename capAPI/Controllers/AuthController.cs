@@ -189,7 +189,7 @@ public async Task<IActionResult> RestPassword(ResetPersonPasswordInputDTO input)
     try
     {
 
-        var user = _context.Users.Where(u => u.UserId == input.userid
+        var user = _context.Users.Where(u => u.UserId == input.userid && u.IsVerified==true
          ).SingleOrDefault();
         if (user == null)
         {
@@ -209,7 +209,7 @@ public async Task<IActionResult> RestPassword(ResetPersonPasswordInputDTO input)
         _context.Update(user);
         _context.SaveChanges();
 
-        return Ok("Congradution Your password Reset Sesccefully");
+        return Ok("Congratulations Your password Reset Sesccefully");
 
 
 
@@ -347,8 +347,8 @@ public async Task<IActionResult> RestPassword(ResetPersonPasswordInputDTO input)
                     
                    user.IsVerified= true;
                     otpEntry.Otpcode = null;
-                    otpEntry.ExpiresAt = null; 
-
+                    otpEntry.ExpiresAt = null;
+                    
                     _context.Update(user);
                     _context.Update(otpEntry);
                     await _context.SaveChangesAsync();
@@ -361,7 +361,7 @@ public async Task<IActionResult> RestPassword(ResetPersonPasswordInputDTO input)
                     
                     otpEntry.Otpcode = null;
                     otpEntry.ExpiresAt = null;
-
+                    user.IsVerified = true;
                     _context.Update(user);
                     _context.Update(otpEntry);
                     await _context.SaveChangesAsync();
