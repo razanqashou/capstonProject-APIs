@@ -9,8 +9,8 @@ namespace capAPI.Helpers
         private static string _apiKey;
         private static string _fromEmail;
         private static string _fromName;
+    
 
-        
         public static void Init(IConfiguration configuration)
         {
             _apiKey = configuration["SendGrid:ApiKey"];
@@ -33,7 +33,7 @@ namespace capAPI.Helpers
             var plain = $"Dear User, {message} Your code: {otpCode}";
             var msg = MailHelper.CreateSingleEmail(from, to, subject, plain, null);
 
-            var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, null);
+          
             var response = await client.SendEmailAsync(msg);
 
             if ((int)response.StatusCode >= 400)

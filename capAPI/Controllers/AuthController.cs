@@ -168,8 +168,7 @@ namespace capAPI.Controllers
                     return StatusCode(200, response);
 
 
-                }
-
+               
 
             }
             catch (Exception ex)
@@ -181,49 +180,49 @@ namespace capAPI.Controllers
 
         }
 
-        //razan
-        [HttpPost]
-        [Route("Rest-password")]
-        public  async Task<IActionResult> RestPassword(ResetPersonPasswordInputDTO input)
+
+[HttpPost]
+[Route("Rest-password")]
+public async Task<IActionResult> RestPassword(ResetPersonPasswordInputDTO input)
+{
+
+    try
+    {
+
+        var user = _context.Users.Where(u => u.UserId == input.userid
+         ).SingleOrDefault();
+        if (user == null)
         {
-
-            try
-            {
-
-                var user = _context.Users.Where(u => u.UserId == input.userid 
-                 ).SingleOrDefault();
-                if (user == null)
-                {
-                    return Ok("user not found");
-                }
-
-                Validation.IsValidPassword(input.Password);
-                if (input.Password != input.ConfirmPassword)
-                {
-                    return Ok(" Cofirrm password Not Match the password");
-                }
-
-
-                user.PasswordHash = input.ConfirmPassword;
-
-
-                _context.Update(user);
-                _context.SaveChanges();
-
-                return Ok("Congradution Your password Reset Sesccefully");
-
-
-
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(400, ex.Message);
-            }
+            return Ok("user not found");
         }
-    
+
+        Validation.IsValidPassword(input.Password);
+        if (input.Password != input.ConfirmPassword)
+        {
+            return Ok(" Cofirrm password Not Match the password");
+        }
 
 
-        [HttpPost("signup")]
+        user.PasswordHash = input.ConfirmPassword;
+
+
+        _context.Update(user);
+        _context.SaveChanges();
+
+        return Ok("Congradution Your password Reset Sesccefully");
+
+
+
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(400, ex.Message);
+    }
+}
+
+
+
+[HttpPost("signup")]
         public async Task<IActionResult> SignUp([FromBody] SignUpInput input)
         {
             var response = new SignUpOutput();
